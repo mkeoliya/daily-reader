@@ -25,7 +25,7 @@ FEED_FILE = Path(__file__).parent / "feed.xml"
 PAGES_PER_RUN = 1
 
 FEED_TITLE = "Daily Reader"
-FEED_LINK = "https://example.github.io/pdf-reader/"
+FEED_LINK = "https://mkeoliya.github.io/daily-reader/"
 FEED_DESC = "A page a day from my reading list."
 
 # Markdown extensions for nice styled output

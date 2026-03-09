@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Daily Reader</title><link>https://example.github.io/pdf-reader/</link><description>A page a day from my reading list.</description><language>en-US</language><lastBuildDate>Mon, 09 Mar 2026 04:52:17 GMT</lastBuildDate><generator>rfeed v1.1.1</generator><docs>https://github.com/svpino/rfeed/blob/master/README.md</docs><item><title>a — Page 1/4</title><description>&lt;style&gt;
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Daily Reader</title><link>https://mkeoliya.github.io/daily-reader/</link><description>A page a day from my reading list.</description><language>en-US</language><lastBuildDate>Mon, 09 Mar 2026 04:55:41 GMT</lastBuildDate><generator>rfeed v1.1.1</generator><docs>https://github.com/svpino/rfeed/blob/master/README.md</docs><item><title>a — Page 1/4</title><description>&lt;style&gt;
   body { font-family: Georgia, 'Times New Roman', serif; line-height: 1.6; color: #222; max-width: 680px; margin: 0 auto; }
   h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
   pre { background: #f5f5f5; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.9em; }
@@ -41,7 +41,7 @@ Unicode is supported. ☺&lt;/p&gt;
 &lt;p&gt;Note again how the actual text starts at 4 columns in (4 characters
 from the left side). Here's a code sample:&lt;/p&gt;
 &lt;pre class="codehilite"&gt;&lt;code&gt;# Let me re-iterate ...
-&lt;/code&gt;&lt;/pre&gt;</description><pubDate>Mon, 09 Mar 2026 04:50:53 GMT</pubDate><guid isPermaLink="true">2d03840b37a24055</guid></item><item><title>a — Page 2/4</title><description>&lt;style&gt;
+&lt;/code&gt;&lt;/pre&gt;</description><pubDate>Mon, 09 Mar 2026 04:55:41 GMT</pubDate><guid isPermaLink="true">2d03840b37a24055</guid></item><item><title>a — Page 2/4</title><description>&lt;style&gt;
   body { font-family: Georgia, 'Times New Roman', serif; line-height: 1.6; color: #222; max-width: 680px; margin: 0 auto; }
   h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
   pre { background: #f5f5f5; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.9em; }
@@ -91,7 +91,7 @@ for i in range(10):
 &lt;p&gt;Dump everything in the pot and follow
     this algorithm:&lt;/p&gt;
 &lt;/li&gt;
-&lt;/ol&gt;</description><pubDate>Mon, 09 Mar 2026 04:50:53 GMT</pubDate><guid isPermaLink="true">ec23169618cf16f4</guid></item><item><title>a — Page 3/4</title><description>&lt;style&gt;
+&lt;/ol&gt;</description><pubDate>Mon, 09 Mar 2026 04:55:41 GMT</pubDate><guid isPermaLink="true">ec23169618cf16f4</guid></item><item><title>a — Page 3/4</title><description>&lt;style&gt;
   body { font-family: Georgia, 'Times New Roman', serif; line-height: 1.6; color: #222; max-width: 680px; margin: 0 auto; }
   h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
   pre { background: #f5f5f5; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.9em; }
@@ -142,7 +142,7 @@ multi-line tables:&lt;/p&gt;
 &lt;p&gt;Footnote text goes here.&amp;#160;&lt;a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text"&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ol&gt;
-&lt;/div&gt;</description><pubDate>Mon, 09 Mar 2026 04:50:53 GMT</pubDate><guid isPermaLink="true">93b3d1b4bd876209</guid></item><item><title>a — Page 4/4</title><description>&lt;style&gt;
+&lt;/div&gt;</description><pubDate>Mon, 09 Mar 2026 04:55:41 GMT</pubDate><guid isPermaLink="true">93b3d1b4bd876209</guid></item><item><title>a — Page 4/4</title><description>&lt;style&gt;
   body { font-family: Georgia, 'Times New Roman', serif; line-height: 1.6; color: #222; max-width: 680px; margin: 0 auto; }
   h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
   pre { background: #f5f5f5; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.9em; }
@@ -190,4 +190,4 @@ term/definition pair to spread things out more.)&lt;/p&gt;
 math should get its own line and be put in in double-dollarsigns:&lt;/p&gt;
 &lt;p&gt;$$I = \int \rho R^{2} dV$$&lt;/p&gt;
 &lt;p&gt;And note that you can backslash-escape any punctuation characters
-which you wish to be displayed literally, ex.: `foo`, *bar*, etc.&lt;/p&gt;</description><pubDate>Mon, 09 Mar 2026 04:50:53 GMT</pubDate><guid isPermaLink="true">c3d62452671a43c1</guid></item></channel></rss>
+which you wish to be displayed literally, ex.: `foo`, *bar*, etc.&lt;/p&gt;</description><pubDate>Mon, 09 Mar 2026 04:55:41 GMT</pubDate><guid isPermaLink="true">c3d62452671a43c1</guid></item></channel></rss>
