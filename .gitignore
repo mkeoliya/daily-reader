@@ -1,0 +1,10 @@
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+
+# State (don't ignore — we want this tracked)
+# state.json
+
+# OS
+.DS_Store
