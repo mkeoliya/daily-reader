@@ -8,7 +8,6 @@ __pycache__/
 
 # Generated output
 output/
-site/
 published.csv
 
 # Source PDFs (large, user-supplied)
