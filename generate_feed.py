@@ -267,40 +267,64 @@ def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> list[dict]
     """Convert specific pages from a PDF using Marker.
 
     Returns a list of dicts with html_full, description (snippet), images, etc.
-    Marker converts the full PDF, then we extract the requested page range.
+    Marker converts the full PDF, then we extract the requested page range
+    from the paginated <div class='page' data-page-id='N'> blocks.
     """
+    import re
+    from bs4 import BeautifulSoup
+
     converter = get_converter()
     result = converter.convert(str(filepath))
 
     total_pages = len(result.metadata.get("page_stats", []))
-    pages_to_take = min(count, total_pages - start_page)
 
-    # The full HTML contains all pages wrapped in <div class='page'>.
-    # For individual page items, we create per-page entries from the full output.
+    # Extract the body content (between <main> tags)
+    soup = BeautifulSoup(result.html, "html.parser")
+    main_tag = soup.find("main")
+    if not main_tag:
+        logger.warning("No <main> tag found in rendered HTML")
+        return []
+
+    # Find all page divs
+    page_divs = main_tag.find_all("div", class_="page")
+
+    if not page_divs:
+        # Fallback: if no page divs, treat the whole body as one page
+        page_divs = [main_tag]
+        total_pages = 1
+
+    pages_to_take = min(count, len(page_divs) - start_page)
+    if pages_to_take <= 0:
+        return []
+
     items = []
     for i in range(pages_to_take):
-        page_num = start_page + i + 1  # 1-indexed
+        page_idx = start_page + i
+        page_num = page_idx + 1  # 1-indexed
         progress_pct = (page_num / total_pages) * 100
 
-        # For each page item, create a standalone styled HTML
+        # Get the HTML content for this specific page
+        page_body = str(page_divs[page_idx])
+
+        # Create a standalone styled HTML page for this page
         page_html = render_page_html(
-            body_html=result.html.split("<main>")[1].split("</main>")[0] if i == 0 else "",
-            title=f"{filepath.stem}",
+            body_html=page_body,
+            title=filepath.stem,
             page_info=f"Page {page_num} of {total_pages}",
             progress_pct=progress_pct,
             is_last_page=(page_num == total_pages),
         )
 
         guid = make_guid(str(filepath), page_num)
-        # Description for RSS — just a text snippet
-        import re
-        body_text = re.sub(r"<[^>]+>", "", result.html)[:300]
+
+        # Text snippet for RSS description / email teaser
+        page_text = page_divs[page_idx].get_text(separator=" ", strip=True)[:300]
 
         items.append({
             "title": f"{filepath.stem} — Page {page_num}/{total_pages}",
-            "description": body_text + "...",
+            "description": page_text + "..." if len(page_text) >= 300 else page_text,
             "html_full": page_html,
-            "images": result.images if i == 0 else {},  # images go with first page
+            "images": result.images if i == 0 else {},  # images saved with first page
             "guid": guid,
             "pubDate": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "source_file": filepath.name,
