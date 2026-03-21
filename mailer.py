@@ -1,7 +1,7 @@
 """
 mailer.py — Email notifications for Daily Reader.
 
-Sends a daily teaser email with links to the generated reading pages.
+Sends a daily teaser email with the first section's content embedded.
 """
 
 from __future__ import annotations
@@ -19,11 +19,13 @@ EMAIL_FROM = "keoliyamayank@gmail.com"
 FEED_LINK = "https://mkeoliya.github.io/daily-reader/"
 
 
-def send_email(items: list[dict]):
-    """Send a teaser email with links to today's reading pages.
+def send_email(section_name: str, documents: list[dict], page_url: str):
+    """Send a teaser email with the first section's content.
 
     Args:
-        items: List of dicts with 'title' and 'page_url' keys.
+        section_name: Name of the first section (e.g. "ml").
+        documents: List of dicts with 'title', 'page_info', 'body_html'.
+        page_url: URL to the full daily page.
     """
     gmail = EmailSender(
         host="smtp.gmail.com",
@@ -32,37 +34,38 @@ def send_email(items: list[dict]):
         password=os.environ["GMAIL_APP_PASSWORD"],
     )
 
-    links_html = ""
-    for item in items:
-        url = item.get("page_url", FEED_LINK)
-        links_html += f'<li><a href="{url}">{item["title"]}</a></li>\n'
+    # Build content from first section's documents
+    content_html = ""
+    for doc in documents:
+        content_html += f"<h2>{doc['title']}</h2>\n"
+        content_html += f"<p style='color: #666; font-size: 0.9em;'>{doc['page_info']}</p>\n"
+        content_html += doc["body_html"]
 
     today = datetime.date.today().strftime("%B %d, %Y")
+    subject_title = documents[0]["title"] if documents else section_name
+
     html_body = f"""\
 <html>
 <head>
 <style>
-  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; color: #333; }}
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; }}
   h1 {{ font-size: 1.3em; }}
-  ul {{ padding-left: 1.2em; }}
-  li {{ margin-bottom: 0.5em; }}
+  h2 {{ font-size: 1.1em; color: #2d5a8e; }}
   a {{ color: #2d5a8e; }}
+  img {{ max-width: 100%; height: auto; }}
   .footer {{ font-size: 0.8em; color: #999; margin-top: 2em; border-top: 1px solid #eee; padding-top: 1em; }}
 </style>
 </head>
 <body>
-  <h1>📖 Daily Reader</h1>
-  <p>{len(items)} new page(s) — {today}</p>
-  <ul>
-    {links_html}
-  </ul>
-  <p><a href="{FEED_LINK}">Read on Daily Reader →</a></p>
+  <h1>📖 Daily Reader — {today}</h1>
+  {content_html}
+  <p><a href="{page_url}">Read all sections on Daily Reader →</a></p>
   <p class="footer">Sent by Daily Reader</p>
 </body>
 </html>"""
 
     gmail.send(
-        subject=f"📖 Daily Reader — {items[0]['title']}",
+        subject=f"📖 Daily Reader — {subject_title}",
         receivers=[EMAIL_TO],
         html=html_body,
     )

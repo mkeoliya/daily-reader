@@ -40,57 +40,46 @@ def _estimate_reading_time(html: str) -> int:
     return max(1, math.ceil(words / 200))
 
 
+def _slugify(name: str) -> str:
+    """Simple slug from a section name."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
 # ---------------------------------------------------------------------------
 # Render functions
 # ---------------------------------------------------------------------------
 
 
-def render_page_html(
-    body_html: str,
+def render_daily_page(
+    sections: list[dict],
     title: str = "Daily Reader",
-    page_info: str = "",
-    reading_time: Optional[int] = None,
-    progress_pct: Optional[float] = None,
-    is_last_page: bool = False,
-    template: str = "page",
+    today_date: str = "",
 ) -> str:
-    """Wrap body HTML in a full styled page.
+    """Render a combined daily page with all sections.
 
     Args:
-        template: Template name without .html extension (e.g. "page", "ml").
-                  Must be a file in renderer/templates/{name}.html that
-                  extends base.html.
+        sections: List of dicts, each with:
+            - section_name: str (e.g. "ml", "books")
+            - documents: list of dicts with title, page_info, body_html
+        title: Page title.
+        today_date: Formatted date string.
     """
-    if reading_time is None:
-        reading_time = _estimate_reading_time(body_html)
+    # Compute combined reading time and add slugs
+    all_html = ""
+    for s in sections:
+        s["slug"] = _slugify(s["section_name"])
+        for doc in s["documents"]:
+            all_html += doc["body_html"]
 
-    tmpl = _env.get_template(f"{template}.html")
+    reading_time = _estimate_reading_time(all_html)
+
+    tmpl = _env.get_template("page.html")
     return tmpl.render(
         title=title,
-        page_info=page_info,
+        today_date=today_date,
         reading_time=reading_time,
-        progress_pct=progress_pct,
-        is_last_page=is_last_page,
-        body_html=body_html,
+        sections=sections,
     )
-
-
-def render_today_page(items: list[dict]) -> str:
-    """Render the 'Today's Reading' index page."""
-    import datetime
-
-    today = datetime.date.today().strftime("%B %d, %Y")
-
-    normalized = []
-    for item in items:
-        normalized.append({
-            "title": item["title"],
-            "subtitle": item.get("subtitle", ""),
-            "url": item.get("url", "#"),
-        })
-
-    tmpl = _env.get_template("today.html")
-    return tmpl.render(title="Today's Reading", today_date=today, items=normalized)
 
 
 def render_bookshelf(

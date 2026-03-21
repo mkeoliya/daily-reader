@@ -1,20 +1,36 @@
-{# page.html — Default page template (no math, no code extras) #}
+{# page.html — Daily combined page with multi-section support #}
 {% extends "base.html" %}
 {% block body %}
 <header class="dr-header">
-  <h1>{{ title }}</h1>
+  <h1>📖 {{ title }}</h1>
   <div class="dr-meta">
-    <span>{{ page_info }}</span>
+    <span>{{ today_date }}</span>
     <span>~{{ reading_time }} min read</span>
   </div>
+  {% if sections|length > 1 %}
+  <nav class="dr-toc">
+    {% for s in sections %}
+    <a href="#section-{{ s.slug }}">{{ s.section_name }}</a>
+    {% endfor %}
+  </nav>
+  {% endif %}
 </header>
 <main>
-  {{ body_html | safe }}
+  {% for s in sections %}
+  <article id="section-{{ s.slug }}">
+    <h2 class="dr-section-title">{{ s.section_name }}</h2>
+    {% for doc in s.documents %}
+    <div class="dr-doc">
+      <h3>{{ doc.title }}</h3>
+      <div class="dr-meta"><span>{{ doc.page_info }}</span></div>
+      {{ doc.body_html | safe }}
+    </div>
+    {% endfor %}
+  </article>
+  {% endfor %}
 </main>
-{% if is_last_page %}
 <div class="dr-done">
   <span class="checkmark">✅</span>
   Done for today. See you tomorrow.
 </div>
-{% endif %}
 {% endblock %}

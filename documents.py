@@ -67,6 +67,29 @@ class Document(ABC):
 # PDF-specific: Marker integration + math tag conversion
 # ---------------------------------------------------------------------------
 
+# Matches standalone margin cross-references that Marker extracts as content.
+# Examples: "Chapter 12", "Section 2.3.4", "Exercise 4.1", "XX CONTENTS"
+_RUNNING_HEADER_RE = re.compile(
+    r"^\s*(?:Chapter\s+\d+|Section\s+[\d.]+|Exercise\s+[\d.]+|[IVXLC]+\s+CONTENTS)\s*$",
+    re.IGNORECASE,
+)
+
+
+def _strip_running_headers(html: str) -> str:
+    """Remove PDF margin cross-references that leak through Marker conversion.
+
+    Textbooks often have margin notes like '→ Chapter 12' pointing to related
+    content. Marker extracts these as regular <p> or <hN> blocks. This strips
+    any element whose entire text matches a known running-header pattern.
+    """
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6"]):
+        if _RUNNING_HEADER_RE.match(tag.get_text()):
+            tag.decompose()
+    return str(soup)
+
 
 def _convert_math_tags(html: str) -> str:
     """Convert Marker's <math display='inline'>...</math> to KaTeX delimiters.
@@ -117,6 +140,7 @@ class DailyReaderRenderer(HTMLRenderer):
         document_output = document.render(self.block_config)
         full_html, images = self.extract_html(document, document_output)
         full_html = _convert_math_tags(full_html)
+        full_html = _strip_running_headers(full_html)
 
         return HTMLOutput(
             html=full_html,
@@ -230,7 +254,7 @@ class MarkdownDocument(Document):
             if not page_text.strip():
                 continue
 
-            html = markdown.markdown(page_text, extensions=_MD_EXTENSIONS)
+            html = markdown.markdown(page_text, extensions=self._MD_EXTENSIONS)
             pages.append(
                 Page(
                     html=html,

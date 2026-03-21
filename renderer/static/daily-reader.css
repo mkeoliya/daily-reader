@@ -80,6 +80,45 @@ body {
     to   { scale: 1 1; }
 }
 
+/* -- Section nav (skip-to links) -- */
+.dr-toc {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+}
+
+.dr-toc a {
+    color: var(--accent);
+    border-bottom: 1px dashed var(--accent);
+    padding-bottom: 1px;
+}
+
+/* -- Section + document blocks -- */
+.dr-section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+}
+
+article:first-child .dr-section-title {
+    margin-top: 0;
+}
+
+.dr-doc + .dr-doc {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px dashed var(--border);
+}
+
 .dr-done {
     text-align: center;
     padding: 2rem;
