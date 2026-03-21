@@ -64,8 +64,8 @@ echo 'GMAIL_APP_PASSWORD=your-app-password' > .env
 
 ## Future Roadmap
 
-- 🔍 Highlights & annotations (tap to highlight, long-press to annotate)
-- 🃏 Flashcard extraction (auto-generate Anki cards from highlights)
+- Progress bar
+- Bookshelf view (for current reads, i.e. current `Document` objects)
 - 🔁 Spaced repetition prompts (revisit key concepts from past readings)
 - 🤖 "Explain this" (send a passage to an LLM for simplified explanation)
 - 📄 ePUB / HTML source support (via Document/Page abstractions)

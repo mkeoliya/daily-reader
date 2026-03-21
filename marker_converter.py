@@ -58,18 +58,29 @@ class MarkerConverter:
         self.converter = PdfConverter(**kwargs)
         self.use_llm = use_llm
 
-    def convert(self, pdf_path: str | Path) -> HTMLOutput:
+    def convert(
+        self, pdf_path: str | Path, page_range: list[int] | None = None
+    ) -> HTMLOutput:
         """
         Convert a PDF to styled HTML.
 
         Args:
             pdf_path: Path to the PDF file.
+            page_range: Optional list of 0-indexed page numbers to convert.
+                        If None, converts all pages.
 
         Returns:
             HTMLOutput with .html, .images, and .metadata
         """
         pdf_path = str(pdf_path)
-        logger.info(f"Converting: {pdf_path}")
+        pages_desc = f"pages {page_range}" if page_range else "all pages"
+        logger.info(f"Converting: {pdf_path} ({pages_desc})")
+
+        # Pass page_range via config so PdfProvider only processes those pages
+        if page_range is not None:
+            self.converter.config = self.converter.config or {}
+            if isinstance(self.converter.config, dict):
+                self.converter.config["page_range"] = page_range
 
         result = self.converter(pdf_path)
 

@@ -175,15 +175,14 @@ def make_guid(filepath: str, page_num: int) -> str:
 
 
 def write_page_html(item: dict, site_dir: Path):
-    """Write a styled HTML page to the site directory."""
-    page_dir = site_dir / "pages"
+    """Write a styled HTML page and its images to a per-page directory."""
+    page_dir = site_dir / "pages" / item["guid"]
     page_dir.mkdir(parents=True, exist_ok=True)
 
-    filename = f"{item['guid']}.html"
-    filepath = page_dir / filename
+    filepath = page_dir / "index.html"
     filepath.write_text(item["html_full"])
 
-    # Save images if present
+    # Save images alongside the HTML
     if item.get("images"):
         for img_name, img_data in item["images"].items():
             img_path = page_dir / img_name
@@ -193,7 +192,7 @@ def write_page_html(item: dict, site_dir: Path):
             elif isinstance(img_data, bytes):
                 img_path.write_bytes(img_data)
 
-    return f"{FEED_LINK}pages/{filename}"
+    return f"{FEED_LINK}pages/{item['guid']}/"
 
 
 def write_today_page(items: list[dict], site_dir: Path):
@@ -266,16 +265,25 @@ def send_email(items: list[dict]):
 def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> dict | None:
     """Convert a range of PDF pages into a single bundled HTML file.
 
-    Marker converts the full PDF, then we extract the requested page range
-    from the paginated <div class='page'> blocks and combine them into one
-    scrollable HTML document.
+    Only the requested pages are sent through Marker's pipeline (layout
+    detection, OCR, rendering) via the page_range parameter.
     """
+    import pypdfium2 as pdfium
     from bs4 import BeautifulSoup
 
-    converter = get_converter()
-    result = converter.convert(str(filepath))
+    # Get total page count cheaply (no ML models involved)
+    doc = pdfium.PdfDocument(str(filepath))
+    total_pages = len(doc)
+    doc.close()
 
-    total_pages = len(result.metadata.get("page_stats", []))
+    pages_to_take = min(count, total_pages - start_page)
+    if pages_to_take <= 0:
+        return None
+
+    # Only convert the pages we need
+    page_range = list(range(start_page, start_page + pages_to_take))
+    converter = get_converter()
+    result = converter.convert(str(filepath), page_range=page_range)
 
     # Extract the body content
     soup = BeautifulSoup(result.html, "html.parser")
@@ -284,22 +292,14 @@ def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> dict | Non
         logger.warning("No <main> tag found in rendered HTML")
         return None
 
-    # Find all page divs
+    # All page divs in the output correspond to our requested range
     page_divs = main_tag.find_all("div", class_="page")
     if not page_divs:
         page_divs = [main_tag]
-        total_pages = 1
 
-    pages_to_take = min(count, len(page_divs) - start_page)
-    if pages_to_take <= 0:
-        return None
-
-    # Bundle all requested pages into a single HTML body
     first_page = start_page + 1  # 1-indexed
     last_page = start_page + pages_to_take
-    body_parts = []
-    for i in range(pages_to_take):
-        body_parts.append(str(page_divs[start_page + i]))
+    body_parts = [str(div) for div in page_divs]
     combined_body = "\n".join(body_parts)
 
     progress_pct = (last_page / total_pages) * 100
@@ -314,7 +314,7 @@ def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> dict | Non
     )
 
     # Text snippet for RSS/email
-    snippet = page_divs[start_page].get_text(separator=" ", strip=True)[:300]
+    snippet = page_divs[0].get_text(separator=" ", strip=True)[:300]
     guid = make_guid(str(filepath), last_page)  # guid based on last page reached
 
     return {
@@ -329,6 +329,7 @@ def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> dict | Non
         "total_pages": total_pages,
         "pages_taken": pages_to_take,
     }
+
 
 
 def convert_text_pages(filepath: Path, start_page: int, count: int) -> dict | None:
