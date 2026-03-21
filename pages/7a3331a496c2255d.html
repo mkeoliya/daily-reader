@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Learning - First 10 Pages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+        delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+    });"></script>
+<style>
+:root {
+    --text: #1a1a2e;
+    --text-secondary: #4a4a6a;
+    --text-muted: #8888a0;
+    --bg: #fefefe;
+    --bg-alt: #f8f7f4;
+    --bg-code: #f5f4f0;
+    --accent: #2d5a8e;
+    --accent-light: #e8f0fe;
+    --border: #e2e0dc;
+    --max-width: 680px;
+    --radius: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text: #e0e0e8;
+        --text-secondary: #a0a0b8;
+        --text-muted: #6a6a80;
+        --bg: #0f0f14;
+        --bg-alt: #161620;
+        --bg-code: #1c1c28;
+        --accent: #5b9bd5;
+        --accent-light: #1a2a3e;
+        --border: #2a2a3a;
+    }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+    font-size: 18px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    line-height: 1.75;
+    color: var(--text);
+    background: var(--bg);
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+}
+
+/* -- Header / progress -- */
+.dr-header {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.dr-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.dr-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.dr-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.dr-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.dr-done {
+    text-align: center;
+    padding: 2rem;
+    margin-top: 2rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    border-top: 1px solid var(--border);
+}
+
+.dr-done .checkmark {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* -- Content typography -- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.3;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+}
+
+h1 { font-size: 2rem; font-weight: 700; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; margin-top: 3rem; }
+h2 { font-size: 1.5rem; font-weight: 600; color: var(--accent); }
+h3, h4 { font-size: 1.15rem; font-weight: 600; color: var(--text-secondary); }
+
+p {
+    margin-bottom: 1.25rem;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+}
+
+blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 1.5rem 0;
+    padding: 0.75rem 1.25rem;
+    color: var(--text-secondary);
+    background: var(--accent-light);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-style: italic;
+}
+
+pre {
+    background: var(--bg-code);
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 1.5rem 0;
+    border: 1px solid var(--border);
+}
+
+code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85em;
+    background: var(--bg-code);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+
+pre code { background: none; padding: 0; font-size: inherit; }
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+}
+
+th, td { border: 1px solid var(--border); padding: 0.6rem 0.9rem; text-align: left; }
+th {
+    background: var(--accent-light);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    margin: 1.5rem auto;
+    display: block;
+}
+
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s ease; }
+a:hover { border-bottom-color: var(--accent); }
+
+.katex-display { margin: 1.5rem 0; overflow-x: auto; padding: 0.5rem 0; }
+
+ul, ol { margin: 1rem 0 1.5rem 1.5rem; }
+li { margin-bottom: 0.4rem; }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+/* -- Page separator -- */
+.page { margin-bottom: 2rem; }
+.page + .page { padding-top: 2rem; border-top: 1px dashed var(--border); }
+
+/* -- Responsive -- */
+@media (max-width: 600px) {
+    html { font-size: 16px; }
+    body { padding: 1rem 1rem 3rem; }
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.3rem; }
+    .dr-meta { flex-direction: column; gap: 0.25rem; }
+}
+
+/* -- Bookshelf -- */
+.bookshelf { list-style: none; padding: 0; margin: 0; }
+.bookshelf li {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.bookshelf .progress-ring {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+}
+
+.bookshelf .book-info { flex: 1; }
+.bookshelf .book-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.bookshelf .book-progress {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+</style>
+</head>
+<body>
+  <header class="dr-header">
+    <h1>Deep Learning - First 10 Pages</h1>
+    <div class="dr-meta">
+      <span>Pages 1–10 of 10</span>
+      <span>~14 min read</span>
+    </div>
+    <div class="dr-progress-bar">
+  <div class="dr-progress-fill" style="width: 100.0%"></div>
+</div>
+  </header>
+  <main>
+    <div class="page" data-page-id="0"><p><img src="_page_0_Figure_0.jpeg"/></p></div>
+<div class="page" data-page-id="1"><p block-type="Text">Deep Learning</p></div>
+<div class="page" data-page-id="2"><p block-type="Text">Christopher M. Bishop • Hugh Bishop</p><h1>Deep Learning</h1><p block-type="Text">Foundations and Concepts</p><p><img src="_page_2_Picture_3.jpeg"/></p></div>
+<div class="page" data-page-id="3"><p block-type="Text">Christopher M. Bishop  Microsoft Research  Cambridge, UK</p><p block-type="Text">Hugh Bishop  Wayve Technologies Ltd  London, UK</p><p block-type="Text">ISBN 978-3-031-45467-7 ISBN 978-3-031-45468-4 (eBook)  <a href="https://doi.org/10.1007/978-3-031-45468-4">https://doi.org/10.1007/978-3-031-45468-4 </a></p><p block-type="Text">© The Editor(s) (if applicable) and The Author(s), under exclusive license to Springer Nature Switzerland AG 2024</p><p block-type="Text">This work is subject to copyright. All rights are solely and exclusively licensed by the Publisher, whether the whole or part of the  material is concerned, specifically the rights of translation, reprinting, reuse of illustrations, recitation, broadcasting, reproduction on  microfilms or in any other physical way, and transmission or information storage and retrieval, electronic adaptation, computer software,  or by similar or dissimilar methodology now known or hereafter developed.</p><p block-type="Text">The use of general descriptive names, registered names, trademarks, service marks, etc. in this publication does not imply, even in the  absence of a specific statement, that such names are exempt from the relevant protective laws and regulations and therefore free for  general use.</p><p block-type="Text">The publisher, the authors, and the editors are safe to assume that the advice and information in this book are believed to be true and  accurate at the date of publication. Neither the publisher nor the authors or the editors give a warranty, expressed or implied, with respect  to the material contained herein or for any errors or omissions that may have been made. The publisher remains neutral with regard to  jurisdictional claims in published maps and institutional affiliations.</p><p block-type="Text">Cover illustration: maksimee / Alamy Stock Photo  This Springer imprint is published by the registered company Springer Nature Switzerland AG  The registered company address is: Gewerbestrasse 11, 6330 Cham, Switzerland</p><p block-type="Text">Paper in this product is recyclable.</p></div>
+<div class="page" data-page-id="4"><h1><b>Preface</b></h1><p block-type="Text">Deep learning uses multilayered neural networks trained with large data sets to solve complex information processing tasks and has emerged as the most successful paradigm in the field of machine learning. Over the last decade, deep learning has revolutionized many domains including computer vision, speech recognition, and natural language processing, and it is being used in a growing multitude of applications across healthcare, manufacturing, commerce, finance, scientific discovery, and many other sectors. Recently, massive neural networks, known as large language models and comprising of the order of a trillion learnable parameters, have been found to exhibit the first indications of general artificial intelligence and are now driving one of the biggest disruptions in the history of technology.</p><h4><b>Goals of the book</b></h4><p block-type="Text">This expanding impact has been accompanied by an explosion in the number and breadth of research publications in machine learning, and the pace of innovation continues to accelerate. For newcomers to the field, the challenge of getting to grips with the key ideas, let alone catching up to the research frontier, can seem daunting. Against this backdrop, <i>Deep Learning: Foundations and Concepts</i> aims to provide newcomers to machine learning, as well as those already experienced in the field, with a thorough understanding of both the foundational ideas that underpin deep learning as well as the key concepts of modern deep learning architectures and techniques. This material will equip the reader with a strong basis for future specialization. Due to the breadth and pace of change in the field, we have deliberately avoided trying to create a comprehensive survey of the latest research. Instead, much of the value of the book derives from a distillation of key ideas, and although the field itself can be expected to continue its rapid advance, these foundations and concepts are likely to stand the test of time. For example, large language models have been evolving very rapidly at the time of writing, yet the underlying transformer architecture and attention mechanism have remained largely unchanged for the last five years, while many core principles of machine learning have been known for decades.</p></div>
+<div class="page" data-page-id="5"><h2><b>Responsible use of technology</b></h2><p block-type="Text">Deep learning is a powerful technology with broad applicability that has the potential to create huge value for the world and address some of society's most pressing challenges. However, these same attributes mean that deep learning also has potential both for deliberate misuse and to cause unintended harms. We have chosen not to discuss ethical or societal aspects of the use of deep learning, as these topics are of such importance and complexity that they warrant a more thorough treatment than is possible in a technical textbook such as this. Such considerations should, however, be informed by a solid grounding in the underlying technology and how it works, and so we hope that this book will make a valuable contribution towards these important discussions. The reader is, nevertheless, strongly encouraged to be mindful about the broader implications of their work and to learn about the responsible use of deep learning and artificial intelligence alongside their studies of the technology itself.</p><h4><b>Structure of the book</b></h4><p block-type="Text">The book is structured into a relatively large number of smaller bite-sized chapters, each of which explores a specific topic. The book has a linear structure in the sense that each chapter depends only on material covered in earlier chapters. It is well suited to teaching a two-semester undergraduate or postgraduate course on machine learning but is equally relevant to those engaged in active research or in self-study.</p><p block-type="Text">A clear understanding of machine learning can be achieved only through the use of some level of mathematics. Specifically, three areas of mathematics lie at the heart of machine learning: probability theory, linear algebra, and multivariate calculus. The book provides a self-contained introduction to the required concepts in probability theory and includes an appendix that summarizes some useful results in linear algebra. It is assumed that the reader already has some familiarity with the basic concepts of multivariate calculus although there are appendices that provide introductions to the calculus of variations and to Lagrange multipliers. The focus of the book, however, is on conveying a clear understanding of ideas, and the emphasis is on techniques that have real-world practical value rather than on abstract theory. Where possible we try to present more complex concepts from multiple complementary perspectives including textual description, diagrams, and mathematical formulae. In addition, many of the key algorithms discussed in the text are summarized in separate boxes. These do not address issues of computational efficiency, but are provided as a complement to the mathematical explanations given in the text. We therefore hope that the material in this book will be accessible to readers from a variety of backgrounds.</p><p block-type="Text" class="has-continuation">Conceptually, this book is perhaps most naturally viewed as a successor to <i>Neural Networks for Pattern Recognition</i> (Bishop, 1995b), which provided the first comprehensive treatment of neural networks from a statistical perspective. It can also be considered as a companion volume to <i>Pattern Recognition and Machine Learning</i> (Bishop, 2006), which covered a broader range of topics in machine learning although it predated the deep learning revolution. However, to ensure that this</p></div>
+<div class="page" data-page-id="6"><p block-type="Text">new book is self-contained, appropriate material has been carried over from Bishop (2006) and refactored to focus on those foundational ideas that are needed for deep learning. This means that there are many interesting topics in machine learning discussed in Bishop (2006) that remain of interest today but which have been omitted from this new book. For example, Bishop (2006) discusses Bayesian methods in some depth, whereas this book is almost entirely non-Bayesian.</p><p block-type="Text">The book is accompanied by a web site that provides supporting material, including a free-to-use digital version of the book as well as solutions to the exercises and downloadable versions of the figures in PDF and JPEG formats:</p><pre>https://www.bishopbook.com</pre><p block-type="Text">The book can be cited using the following BibTex entry:</p><pre>@book{Bishop:DeepLearning24,
+  author = {Christopher M. Bishop and Hugh Bishop},
+  title = {Deep Learning: Foundations and Concepts},
+  year = {2024},
+  publisher = {Springer}
+}</pre><p block-type="Text">If you have any feedback on the book or would like to report any errors, please send these to <a href="mailto:feedback@bishopbook.com">feedback@bishopbook.com</a></p><h3><b>References</b></h3><p block-type="Text">In the spirit of focusing on core ideas, we make no attempt to provide a comprehensive literature review, which in any case would be impossible given the scale and pace of change of the field. We do, however, provide references to some of the key research papers as well as review articles and other sources of further reading. In many cases, these also provide important implementation details that we gloss over in the text in order not to distract the reader from the central concepts being discussed.</p><p block-type="Text">Many books have been written on the subject of machine learning in general and on deep learning in particular. Those which are closest in level and style to this book include Bishop (2006), Goodfellow, Bengio, and Courville (2016), Murphy (2022), Murphy (2023), and Prince (2023).</p><p block-type="Text">Over the last decade, the nature of machine learning scholarship has changed significantly, with many papers being posted online on archival sites ahead of, or even instead of, submission to peer-reviewed conferences and journals. The most popular of these sites is <i>arXiv</i>, pronounced 'archive', and is available at</p><pre>https://arXiv.org</pre><p block-type="Text" class="has-continuation">The site allows papers to be updated, often leading to multiple versions associated with different calendar years, which can result in some ambiguity as to which version should be cited and for which year. It also provides free access to a PDF of each paper. We have therefore adopted a simple approach of referencing the paper according to the year of first upload, although we recommend reading the most recent version.</p></div>
+<div class="page" data-page-id="7"><p block-type="Text">Papers on arXiv are indexed using a notation arXiv:YYMM.XXXXX where YY and MM denote the year and month of first upload, respectively. Subsequent versions are denoted by appending a version number N in the form arXiv:YYMM.XXXXXVN.</p><h4><b>Exercises </b></h4><p block-type="Text">Each chapter concludes with a set of exercises designed to reinforce the key ideas explained in the text or to develop and generalize them in significant ways. These exercises form an important part of the text and each is graded according to difficulty ranging from $(\star)$, which denotes a simple exercise taking a few moments to complete, through to $(\star \star \star)$, which denotes a significantly more complex exercise. The reader is strongly encouraged to attempt the exercises since active participation with the material greatly increases the effectiveness of learning. Worked solutions to all of the exercises are available as a downloadable PDF file from the book web site.</p><h4><b>Mathematical notation </b></h4><p block-type="Text">We follow the same notation as Bishop (2006). For an overview of mathematics in the context of machine learning, see Deisenroth, Faisal, and Ong (2020).</p><p block-type="Text">Vectors are denoted by lower case bold roman letters such as $\mathbf{x}$, whereas matrices are denoted by uppercase bold roman letters, such as $\mathbf{M}$. All vectors are assumed to be column vectors unless otherwise stated. A superscript $\mathbf{T}$ denotes the transpose of a matrix or vector, so that $\mathbf{x}^{\mathbf{T}}$ will be a row vector. The notation $(w_1,\ldots,w_M)$ denotes a row vector with M elements, and the corresponding column vector is written as $\mathbf{w}=(w_1,\ldots,w_M)^{\mathbf{T}}$. The $M\times M$ identity matrix (also known as the unit matrix) is denoted $\mathbf{I}_M$, which will be abbreviated to $\mathbf{I}$ if there is no ambiguity about its dimensionality. It has elements $I_{ij}$ that equal 1 if i=j and 0 if $i\neq j$. The elements of a unit matrix are sometimes denoted by $\delta_{ij}$. The notation 1 denotes a column vector in which all elements have the value 1. $\mathbf{a} \oplus \mathbf{b}$ denotes the concatenation of vectors $\mathbf{a}$ and $\mathbf{b}$, so that if $\mathbf{a}=(a_1,\ldots,a_N)$ and $\mathbf{b}=(b_1,\ldots,b_M)$ then $\mathbf{a}\oplus\mathbf{b}=(a_1,\ldots,a_N,b_1,\ldots,b_M)$. |x| denotes the modulus (the positive part) of a scalar x, also known as the absolute value. We use det $\mathbf{A}$ to denote the determinant of a matrix $\mathbf{A}$.</p><p block-type="Text">The notation $x \sim p(x)$ signifies that x is sampled from the distribution p(x). Where there is ambiguity, we will use subscripts as in $p_x(\cdot)$ to denote which density is referred to. The expectation of a function f(x,y) with respect to a random variable x is denoted by $\mathbb{E}_x[f(x,y)]$. In situations where there is no ambiguity as to which variable is being averaged over, this will be simplified by omitting the suffix, for instance $\mathbb{E}[x]$. If the distribution of x is conditioned on another variable z, then the corresponding conditional expectation will be written $\mathbb{E}_x[f(x)|z]$. Similarly, the variance of f(x) is denoted var[f(x)], and for vector variables, the covariance is written $\text{cov}[\mathbf{x},\mathbf{y}]$. We will also use $\text{cov}[\mathbf{x}]$ as a shorthand notation for $\text{cov}[\mathbf{x},\mathbf{x}]$.</p><p block-type="Text">The symbol $\forall$ means 'for all', so that $\forall m \in \mathcal{M}$ denotes all values of m within the set $\mathcal{M}$. We use $\mathbb{R}$ to denote the real numbers. On a graph, the set of neighbours of node i is denoted $\mathcal{N}(i)$, which should not be confused with the Gaussian or normal distribution $\mathcal{N}(x|\mu,\sigma^2)$. A functional is denoted f[y] where y(x) is some function. The concept of a functional is discussed in Appendix B. Curly braces $\{\}$ denote a</p></div>
+<div class="page" data-page-id="8"><p block-type="Text">set. The notation $g(x) = \mathcal{O}(f(x))$ denotes that |f(x)/g(x)| is bounded as $x \to \infty$. For instance, if $g(x) = 3x^2 + 2$, then $g(x) = \mathcal{O}(x^2)$. The notation $\lfloor x \rfloor$ denotes the 'floor' of x, i.e., the largest integer that is less than or equal to x.</p><p block-type="Text">If we have N independent and identically distributed (i.i.d.) values $\mathbf{x}_1,\dots,\mathbf{x}_N$ of a D-dimensional vector $\mathbf{x}=(x_1,\dots,x_D)^\mathrm{T}$, we can combine the observations into a data matrix $\mathbf{X}$ of dimension $N\times D$ in which the nth row of $\mathbf{X}$ corresponds to the row vector $\mathbf{x}_n^\mathrm{T}$. Thus, the n,i element of $\mathbf{X}$ corresponds to the ith element of the nth observation $\mathbf{x}_n$ and is written $x_{ni}$. For one-dimensional variables, we denote such a matrix by $\mathbf{X}$, which is a column vector whose nth element is $x_n$. Note that $\mathbf{X}$ (which has dimensionality N) uses a different typeface to distinguish it from $\mathbf{x}$ (which has dimensionality D).</p><h4><b>Acknowledgements </b></h4><p block-type="Text">We would like to express our sincere gratitude to the many people who reviewed draft chapters and provided valuable feedback. In particular, we wish to thank Samuel Albanie, Cristian Bodnar, John Bronskill, Wessel Bruinsma, Ignas Budvytis, Chi Chen, Yaoyi Chen, Long Chen, Fergal Cotter, Sam Devlin, Aleksander Durumeric, Sebastian Ehlert, Katarina Elez, Andrew Foong, Hong Ge, Paul Gladkov, Paula Gori Giorgi, John Gossman, Tengda Han, Juyeon Heo, Katja Hofmann, Chin-Wei Huang, Yongchaio Huang, Giulio Isacchini, Matthew Johnson, Pragya Kale, Atharva Kelkar, Leon Klein, Pushmeet Kohli, Bonnie Kruft, Adrian Li, Haiguang Liu, Ziheng Lu, Giulia Luise, Stratis Markou, Sergio Valcarcel Macua, Krzysztof Maziarz, Matěj Mezera, Laurence Midgley, Usman Munir, Félix Musil, Elise van der Pol, Tao Oin, Isaac Reid, David Rosenberger, Lloyd Russell, Maximilian Schebek, Megan Stanley, Karin Strauss, Clark Templeton, Marlon Tobaben, Aldo Sayeg Pasos-Trejo, Richard Turner, Max Welling, Furu Wei, Robert Weston, Chris Williams, Yingce Xia, Shufang Xie, Iryna Zaporozhets, Claudio Zeni, Xieyuan Zhang, and many other colleagues who contributed through valuable discussions. We would also like to thank our editor Paul Drougas and many others at Springer, as well as the copy editor Jonathan Webley, for their support during the production of the book.</p><p block-type="Text">We would like to say a special thank-you to Markus Svensén, who provided immense help with the figures and typesetting for Bishop (2006) including the LATEX style files, which have also been used for this new book. We are also grateful to the many scientists who allowed us to reproduce diagrams from their published work. Acknowledgements for specific figures appear in the associated figure captions.</p><p block-type="Text">Chris would like to express sincere gratitude to Microsoft for creating a highly stimulating research environment and for providing the opportunity to write this book. The views and opinions expressed in this book, however, are those of the authors and are therefore not necessarily the same as those of Microsoft or its affiliates. It has been a huge privilege and pleasure to collaborate with my son Hugh in preparing this book, which started as a joint project during the first Covid lockdown.</p></div>
+<div class="page" data-page-id="9"><h4><b>x</b> PREFACE</h4><p block-type="Text">Hugh would like to thank Wayve Technologies Ltd for generously allowing him to work part time so that he could collaborate in writing this book as well as for providing an inspiring and supportive environment for him to work and learn in. The views expressed in this book are not necessarily the same as those of Wayve or its affiliates. He would like to express his gratitude to his fiancee Jemima for her ´ constant support as well as her grammatical and stylistic consultations. He would also like to thank Chris, who has been an excellent colleague and an inspiration to Hugh throughout his life.</p><p block-type="Text">Finally, we would both like to say a huge thank-you to our family members Jenna and Mark for so many things far too numerous to list here. It seems a very long time ago that we all gathered on the beach in Antalya to watch a total eclipse of the sun and to take a family photo for the dedication page of <i>Pattern Recognition and Machine Learning</i>!</p><p block-type="Text">Chris Bishop and Hugh Bishop Cambridge, UK October, 2023</p></div>
+  </main>
+  <div class="dr-done">
+  <span class="checkmark">✅</span>
+  Done for today. See you tomorrow.
+</div>
+</body>
+</html>

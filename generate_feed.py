@@ -31,7 +31,7 @@ from renderer import render_page_html, render_today_page, _estimate_reading_time
 load_dotenv()
 
 DATA_DIR = Path(__file__).parent / "data"
-SITE_DIR = Path(__file__).parent / "site"
+SITE_DIR = Path(__file__).parent  # output to repo root for GitHub Pages
 STATE_FILE = Path(__file__).parent / "published.csv"
 FEED_FILE = Path(__file__).parent / "feed.xml"
 PAGES_PER_RUN = 10  # 10 pages/day across all active books
@@ -263,14 +263,13 @@ def send_email(items: list[dict]):
 # ---------------------------------------------------------------------------
 
 
-def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> list[dict]:
-    """Convert specific pages from a PDF using Marker.
+def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> dict | None:
+    """Convert a range of PDF pages into a single bundled HTML file.
 
-    Returns a list of dicts with html_full, description (snippet), images, etc.
     Marker converts the full PDF, then we extract the requested page range
-    from the paginated <div class='page' data-page-id='N'> blocks.
+    from the paginated <div class='page'> blocks and combine them into one
+    scrollable HTML document.
     """
-    import re
     from bs4 import BeautifulSoup
 
     converter = get_converter()
@@ -278,105 +277,110 @@ def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> list[dict]
 
     total_pages = len(result.metadata.get("page_stats", []))
 
-    # Extract the body content (between <main> tags)
+    # Extract the body content
     soup = BeautifulSoup(result.html, "html.parser")
     main_tag = soup.find("main")
     if not main_tag:
         logger.warning("No <main> tag found in rendered HTML")
-        return []
+        return None
 
     # Find all page divs
     page_divs = main_tag.find_all("div", class_="page")
-
     if not page_divs:
-        # Fallback: if no page divs, treat the whole body as one page
         page_divs = [main_tag]
         total_pages = 1
 
     pages_to_take = min(count, len(page_divs) - start_page)
     if pages_to_take <= 0:
-        return []
+        return None
 
-    items = []
+    # Bundle all requested pages into a single HTML body
+    first_page = start_page + 1  # 1-indexed
+    last_page = start_page + pages_to_take
+    body_parts = []
     for i in range(pages_to_take):
-        page_idx = start_page + i
-        page_num = page_idx + 1  # 1-indexed
-        progress_pct = (page_num / total_pages) * 100
+        body_parts.append(str(page_divs[start_page + i]))
+    combined_body = "\n".join(body_parts)
 
-        # Get the HTML content for this specific page
-        page_body = str(page_divs[page_idx])
+    progress_pct = (last_page / total_pages) * 100
+    is_last = (last_page >= total_pages)
 
-        # Create a standalone styled HTML page for this page
-        page_html = render_page_html(
-            body_html=page_body,
-            title=filepath.stem,
-            page_info=f"Page {page_num} of {total_pages}",
-            progress_pct=progress_pct,
-            is_last_page=(page_num == total_pages),
-        )
+    page_html = render_page_html(
+        body_html=combined_body,
+        title=filepath.stem,
+        page_info=f"Pages {first_page}–{last_page} of {total_pages}",
+        progress_pct=progress_pct,
+        is_last_page=is_last,
+    )
 
-        guid = make_guid(str(filepath), page_num)
+    # Text snippet for RSS/email
+    snippet = page_divs[start_page].get_text(separator=" ", strip=True)[:300]
+    guid = make_guid(str(filepath), last_page)  # guid based on last page reached
 
-        # Text snippet for RSS description / email teaser
-        page_text = page_divs[page_idx].get_text(separator=" ", strip=True)[:300]
-
-        items.append({
-            "title": f"{filepath.stem} — Page {page_num}/{total_pages}",
-            "description": page_text + "..." if len(page_text) >= 300 else page_text,
-            "html_full": page_html,
-            "images": result.images if i == 0 else {},  # images saved with first page
-            "guid": guid,
-            "pubDate": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            "source_file": filepath.name,
-            "page_num": page_num,
-            "total_pages": total_pages,
-        })
-
-    return items
+    return {
+        "title": f"{filepath.stem} — Pages {first_page}–{last_page}/{total_pages}",
+        "description": snippet + "..." if len(snippet) >= 300 else snippet,
+        "html_full": page_html,
+        "images": result.images,
+        "guid": guid,
+        "pubDate": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "source_file": filepath.name,
+        "page_num": last_page,
+        "total_pages": total_pages,
+        "pages_taken": pages_to_take,
+    }
 
 
-def convert_text_pages(filepath: Path, start_page: int, count: int) -> list[dict]:
-    """Convert pages from a markdown/text file. Fallback for non-PDF files."""
+def convert_text_pages(filepath: Path, start_page: int, count: int) -> dict | None:
+    """Convert a range of text/markdown pages into a single bundled HTML file."""
     text = filepath.read_text()
     pages = split_text_into_pages(text)
     total_pages = len(pages)
 
     pages_to_take = min(count, total_pages - start_page)
-    items = []
+    if pages_to_take <= 0:
+        return None
 
+    first_page = start_page + 1
+    last_page = start_page + pages_to_take
+
+    # Bundle all pages into one HTML body
+    body_parts = []
     for i in range(pages_to_take):
-        page_idx = start_page + i
-        page_num = page_idx + 1
-        page_content = pages[page_idx]
-        html_body = md_to_styled_html(page_content)
-        progress_pct = (page_num / total_pages) * 100
+        page_content = pages[start_page + i]
+        body_parts.append(md_to_styled_html(page_content))
+    combined_body = "<hr>\n".join(body_parts)
 
-        page_html = render_page_html(
-            body_html=html_body,
-            title=filepath.stem,
-            page_info=f"Page {page_num} of {total_pages}",
-            progress_pct=progress_pct,
-            is_last_page=(page_num == total_pages),
-        )
+    progress_pct = (last_page / total_pages) * 100
+    page_html = render_page_html(
+        body_html=combined_body,
+        title=filepath.stem,
+        page_info=f"Pages {first_page}–{last_page} of {total_pages}",
+        progress_pct=progress_pct,
+        is_last_page=(last_page >= total_pages),
+    )
 
-        guid = make_guid(str(filepath), page_num)
-        items.append({
-            "title": f"{filepath.stem} — Page {page_num}/{total_pages}",
-            "description": html_body,
-            "html_full": page_html,
-            "images": {},
-            "guid": guid,
-            "pubDate": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            "source_file": filepath.name,
-            "page_num": page_num,
-            "total_pages": total_pages,
-        })
-
-    return items
+    guid = make_guid(str(filepath), last_page)
+    return {
+        "title": f"{filepath.stem} — Pages {first_page}–{last_page}/{total_pages}",
+        "description": pages[start_page][:300],
+        "html_full": page_html,
+        "images": {},
+        "guid": guid,
+        "pubDate": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "source_file": filepath.name,
+        "page_num": last_page,
+        "total_pages": total_pages,
+        "pages_taken": pages_to_take,
+    }
 
 
 def generate_new_items(pages_per_run: int) -> list[dict]:
-    """Generate the next batch of feed items."""
+    """Generate the next batch of feed items.
+
+    Each item is a single bundled HTML file containing multiple pages
+    from one book. pages_per_run pages are distributed across all active books.
+    """
     files = get_document_files()
     if not files:
         print("No documents found in data/")
@@ -396,21 +400,21 @@ def generate_new_items(pages_per_run: int) -> list[dict]:
         filepath = files[file_idx]
 
         if filepath.suffix.lower() == ".pdf":
-            items = convert_pdf_pages(filepath, page_idx, remaining)
+            item = convert_pdf_pages(filepath, page_idx, remaining)
         else:
-            items = convert_text_pages(filepath, page_idx, remaining)
+            item = convert_text_pages(filepath, page_idx, remaining)
 
-        if not items:
+        if not item:
             file_idx += 1
             page_idx = 0
             continue
 
-        new_items.extend(items)
-        page_idx += len(items)
-        remaining -= len(items)
+        new_items.append(item)
+        page_idx += item["pages_taken"]
+        remaining -= item["pages_taken"]
 
         # Check if we finished this file
-        if items and items[-1]["page_num"] >= items[-1]["total_pages"]:
+        if item["page_num"] >= item["total_pages"]:
             file_idx += 1
             page_idx = 0
 
@@ -483,8 +487,9 @@ def main():
     )
     args = parser.parse_args()
 
-    # Ensure site directory exists
-    SITE_DIR.mkdir(parents=True, exist_ok=True)
+    # Ensure pages directory exists
+    pages_dir = SITE_DIR / "pages"
+    pages_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate new items
     published = load_published()
@@ -492,14 +497,10 @@ def main():
 
     if new_items:
         for item in new_items:
-            # Write each page as a standalone HTML file
+            # Write bundled HTML file (one per book per run)
             page_url = write_page_html(item, SITE_DIR)
             item["page_url"] = page_url
             print(f"  + {item['title']} → {page_url}")
-
-        # Write today's reading index
-        write_today_page(new_items, SITE_DIR)
-        print(f"  📄 Today's reading: {SITE_DIR / 'index.html'}")
 
         # Send email if requested
         if args.send_email:
