@@ -1,27 +1,18 @@
 """
-renderer/engine.py — Rendering logic for Daily Reader.
+renderer/engine.py — Format-agnostic rendering for Daily Reader.
 
-Contains all Python logic for generating styled HTML pages via Jinja2
-templates. Subclasses Marker's HTMLRenderer for PDF pipeline integration.
-
-Usage:
-    from renderer import render_page_html
-    html = render_page_html("<p>Hello</p>", title="My Book", progress_pct=42.0)
+Pure HTML → styled page layer. No knowledge of PDF, Marker, or any specific
+document format. All format-specific post-processing belongs in documents.py.
 """
 
 from __future__ import annotations
 
 import math
 import re
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from jinja2 import Environment, FileSystemLoader
-
-from bs4 import BeautifulSoup
-from marker.renderers.html import HTMLRenderer, HTMLOutput
-from marker.schema.document import Document
 
 
 # ---------------------------------------------------------------------------
@@ -38,32 +29,6 @@ _env = Environment(
 
 
 # ---------------------------------------------------------------------------
-# Document / Page abstractions (format-agnostic, for future ePUB/HTML/etc.)
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class ReaderDocument:
-    """Format-agnostic document metadata."""
-
-    title: str
-    total_pages: int
-    source_path: Path
-    source_format: str = "pdf"  # future: "epub", "html", etc.
-
-
-@dataclass
-class ReaderPage:
-    """A single rendered page with metadata."""
-
-    html_content: str
-    page_number: int
-    document: ReaderDocument
-    section_title: Optional[str] = None
-    word_count: int = 0
-
-
-# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -73,32 +38,6 @@ def _estimate_reading_time(html: str) -> int:
     text = re.sub(r"<[^>]+>", "", html)
     words = len(text.split())
     return max(1, math.ceil(words / 200))
-
-
-def _convert_math_tags(html: str) -> str:
-    """Convert Marker's <math display='inline'>...</math> to KaTeX delimiters."""
-    # Inline math: <math display="inline">...</math> → $...$
-    html = re.sub(
-        r'<math\s+display="inline">(.*?)</math>',
-        r"$\1$",
-        html,
-        flags=re.DOTALL,
-    )
-    # Display math: <math display="block">...</math> → $$...$$
-    html = re.sub(
-        r'<math\s+display="block">(.*?)</math>',
-        r"$$\1$$",
-        html,
-        flags=re.DOTALL,
-    )
-    # Plain <math>...</math> → $...$
-    html = re.sub(
-        r"<math>(.*?)</math>",
-        r"$\1$",
-        html,
-        flags=re.DOTALL,
-    )
-    return html
 
 
 # ---------------------------------------------------------------------------
@@ -113,14 +52,19 @@ def render_page_html(
     reading_time: Optional[int] = None,
     progress_pct: Optional[float] = None,
     is_last_page: bool = False,
+    template: str = "page",
 ) -> str:
-    """Wrap body HTML in a full styled page."""
+    """Wrap body HTML in a full styled page.
+
+    Args:
+        template: Template name without .html extension (e.g. "page", "ml").
+                  Must be a file in renderer/templates/{name}.html that
+                  extends base.html.
+    """
     if reading_time is None:
         reading_time = _estimate_reading_time(body_html)
 
-    body_html = _convert_math_tags(body_html)
-
-    tmpl = _env.get_template("page.html")
+    tmpl = _env.get_template(f"{template}.html")
     return tmpl.render(
         title=title,
         page_info=page_info,
@@ -137,7 +81,6 @@ def render_today_page(items: list[dict]) -> str:
 
     today = datetime.date.today().strftime("%B %d, %Y")
 
-    # Normalize items to have url/subtitle keys
     normalized = []
     for item in items:
         normalized.append({
@@ -151,9 +94,14 @@ def render_today_page(items: list[dict]) -> str:
 
 
 def render_bookshelf(
-    books: list[ReaderDocument], progress: dict[str, int] | None = None
+    books: list, progress: dict[str, int] | None = None
 ) -> str:
-    """Render a minimalist bookshelf page with progress."""
+    """Render a minimalist bookshelf page with progress.
+
+    Args:
+        books: List of objects with .title and .total_pages attributes.
+        progress: Dict mapping title → current page number.
+    """
     progress = progress or {}
 
     book_data = []
@@ -170,50 +118,3 @@ def render_bookshelf(
 
     tmpl = _env.get_template("bookshelf.html")
     return tmpl.render(title="Bookshelf", books=book_data)
-
-
-# ---------------------------------------------------------------------------
-# Custom Marker Renderer
-# ---------------------------------------------------------------------------
-
-
-class DailyReaderRenderer(HTMLRenderer):
-    """
-    Custom Marker renderer that produces mobile-first styled HTML.
-
-    Plugs into Marker via:
-        PdfConverter(artifact_dict={}, renderer="renderer.engine.DailyReaderRenderer")
-    """
-
-    # Inherited from BaseRenderer — filter out page headers/footers
-    keep_pageheader_in_output: bool = False
-    keep_pagefooter_in_output: bool = False
-    paginate_output: bool = True  # wrap each page in <div class='page'>
-
-    def __call__(self, document: Document) -> HTMLOutput:
-        document_output = document.render(self.block_config)
-        full_html, images = self.extract_html(document, document_output)
-
-        # Build document metadata for the header
-        title = self._extract_title(document)
-        total_pages = len(document.pages)
-
-        styled_html = render_page_html(
-            body_html=full_html,
-            title=title,
-            page_info=f"{total_pages} pages",
-            progress_pct=100.0,  # full doc render shows 100%
-        )
-
-        return HTMLOutput(
-            html=styled_html,
-            images=images,
-            metadata=self.generate_document_metadata(document, document_output),
-        )
-
-    def _extract_title(self, document: Document) -> str:
-        """Try to extract a title from the document's table of contents."""
-        toc = document.table_of_contents
-        if toc:
-            return toc[0].get("title", "Untitled")
-        return "Untitled"
