@@ -194,9 +194,6 @@ class DailyReaderRenderer(HTMLRenderer):
         document_output = document.render(self.block_config)
         full_html, images = self.extract_html(document, document_output)
 
-        # Apply math tag conversion
-        full_html = _convert_math_tags(full_html)
-
         # Build document metadata for the header
         title = self._extract_title(document)
         total_pages = len(document.pages)
