@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block body %}
+<header class="dr-header">
+  <h1>{{ title }}</h1>
+  <div class="dr-meta">
+    <span>{{ page_info }}</span>
+    <span>~{{ reading_time }} min read</span>
+  </div>
+</header>
+<main>
+  {{ body_html | safe }}
+</main>
+{% if is_last_page %}
+<div class="dr-done">
+  <span class="checkmark">✅</span>
+  Done for today. See you tomorrow.
+</div>
+{% endif %}
+{% if progress_pct is not none %}
+<div class="dr-progress-bar">
+  <div class="dr-progress-fill" style="width: {{ "%.1f"|format(progress_pct) }}%"></div>
+</div>
+{% endif %}
+{% endblock %}

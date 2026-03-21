@@ -176,7 +176,8 @@ def make_guid(filepath: str, page_num: int) -> str:
 
 def write_page_html(item: dict, site_dir: Path):
     """Write a styled HTML page and its images to a per-page directory."""
-    page_dir = site_dir / "pages" / item["guid"]
+    folder_name = datetime.date.today().isoformat()  # e.g. 2026-03-21
+    page_dir = site_dir / "pages" / folder_name
     page_dir.mkdir(parents=True, exist_ok=True)
 
     filepath = page_dir / "index.html"
@@ -192,7 +193,7 @@ def write_page_html(item: dict, site_dir: Path):
             elif isinstance(img_data, bytes):
                 img_path.write_bytes(img_data)
 
-    return f"{FEED_LINK}pages/{item['guid']}/"
+    return f"{FEED_LINK}pages/{folder_name}/"
 
 
 def write_today_page(items: list[dict], site_dir: Path):

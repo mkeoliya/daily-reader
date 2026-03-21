@@ -30,7 +30,7 @@ class MarkerConverter:
 
     def __init__(
         self,
-        renderer: str = "renderer.DailyReaderRenderer",
+        renderer: str = "renderer.engine.DailyReaderRenderer",
         use_llm: bool = False,
         llm_service: Optional[str] = None,
     ):

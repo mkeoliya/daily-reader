@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block body %}
+<header class="dr-header">
+  <h1>📚 Bookshelf</h1>
+</header>
+<main>
+  <ul class="bookshelf">
+    {% for book in books %}
+    <li>
+      <svg class="progress-ring" viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="20" fill="none" stroke="var(--border)" stroke-width="3"/>
+        <circle cx="24" cy="24" r="20" fill="none" stroke="var(--accent)" stroke-width="3"
+          stroke-dasharray="{{ book.pct * 1.257 }} {{ 125.7 - book.pct * 1.257 }}"
+          stroke-linecap="round" transform="rotate(-90 24 24)"/>
+        <text x="24" y="27" text-anchor="middle" font-size="11"
+          font-family="Inter, sans-serif" fill="var(--text-secondary)">{{ book.pct_int }}%</text>
+      </svg>
+      <div class="book-info">
+        <div class="book-title">{{ book.title }}</div>
+        <div class="book-progress">Page {{ book.current }} of {{ book.total }}</div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</main>
+{% endblock %}
