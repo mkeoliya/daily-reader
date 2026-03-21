@@ -15,7 +15,7 @@ Daily Reader takes your PDF textbooks, converts them page-by-page into styled, m
 |---------|----------------------|
 | 📱 Mobile-first typography (Source Serif 4, Inter) | [`renderer/static/daily-reader.css`](renderer/static/daily-reader.css) |
 | 🌙 Automatic dark mode (`prefers-color-scheme`) | [`daily-reader.css` :root vars](renderer/static/daily-reader.css#L14-L24) |
-| 📐 LaTeX math via KaTeX | [`engine.py: _convert_math_tags()`](renderer/engine.py) + [`base.html`](renderer/templates/base.html) |
+| 📐 LaTeX math via KaTeX | [`documents.py: _convert_math_tags()`](documents.py) + [`ml.html`](renderer/templates/ml.html) |
 | 📊 Sticky progress bar (bottom of viewport) | [`daily-reader.css: .dr-progress-bar`](renderer/static/daily-reader.css#L72-L86) + [`page.html`](renderer/templates/page.html) |
 | ⏱️ Reading time estimate | [`engine.py: _estimate_reading_time()`](renderer/engine.py) |
 | ✅ "Done for today" end marker | [`page.html: .dr-done`](renderer/templates/page.html) |
@@ -37,9 +37,9 @@ documents.py                  ← Document/Page abstraction
   ├── PdfDocument             ← Uses Marker ML pipeline
   └── MarkdownDocument        ← Uses python-markdown
 
-renderer/                     ← Jinja2 templating + CSS
-  ├── engine.py               ← render_page_html(), DailyReaderRenderer
-  ├── templates/{base,page,today,bookshelf}.html
+renderer/                     ← Jinja2 templating + CSS (format-agnostic)
+  ├── engine.py               ← render_page_html(), render_bookshelf()
+  ├── templates/{base,page,ml,today,bookshelf}.html
   └── static/daily-reader.css
 
 sections.py                   ← Section discovery from data/ subdirs
@@ -64,6 +64,7 @@ uv run python generate_feed.py --send-email
 2. Add a `config.yaml`:
    ```yaml
    pages_per_day: 5
+   template: page    # or create a custom template in renderer/templates/
    ```
 3. Drop PDFs or `.md` files into the directory
 4. Run `uv run python generate_feed.py`

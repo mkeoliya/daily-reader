@@ -19,15 +19,7 @@ import markdown
 
 logger = logging.getLogger(__name__)
 
-# Markdown extensions for non-PDF fallback
-_MD_EXTENSIONS = [
-    "tables",
-    "fenced_code",
-    "codehilite",
-    "def_list",
-    "footnotes",
-    "md_in_html",
-]
+
 
 
 # ---------------------------------------------------------------------------
@@ -206,6 +198,14 @@ class MarkdownDocument(Document):
     """Markdown/text document — uses python-markdown for conversion."""
 
     _LINES_PER_PAGE = 40
+    _MD_EXTENSIONS = [
+        "tables",
+        "fenced_code",
+        "codehilite",
+        "def_list",
+        "footnotes",
+        "md_in_html",
+    ]
 
     def _count_pages(self) -> int:
         text = self.source_path.read_text()
