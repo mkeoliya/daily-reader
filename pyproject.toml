@@ -5,6 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "docling>=2.81.0",
     "markdown>=3.10.2",
+    "pypdf>=6.8.0",
+    "python-dotenv>=1.2.2",
+    "redmail>=0.6.0",
     "rfeed>=1.1.1",
+    "tool>=0.8.0",
 ]

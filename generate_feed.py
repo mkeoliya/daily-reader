@@ -2,33 +2,49 @@
 RSS Feed Generator — converts documents in data/ to a styled HTML RSS feed.
 
 Usage:
-    uv run python generate_feed.py [--pages-per-run N] [--output feed.xml]
+    uv run python generate_feed.py [--pages-per-run N] [--output feed.xml] [--send-email]
 
-State is tracked in state.json so each run picks up where it left off.
+State is tracked in published.csv (append-only) so each run picks up where it left off.
+PDF files are converted via Marker with our custom DailyReaderRenderer.
+HTML pages are written to site/ for GitHub Pages hosting.
 """
 
 import argparse
-import json
+import csv
 import datetime
 import hashlib
+import logging
+import os
 from pathlib import Path
+from typing import Optional
 
 import markdown
 import rfeed
+from dotenv import load_dotenv
+
+from marker_converter import MarkerConverter
+from renderer import render_page_html, render_today_page, _estimate_reading_time
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
+load_dotenv()
+
 DATA_DIR = Path(__file__).parent / "data"
-STATE_FILE = Path(__file__).parent / "state.json"
+SITE_DIR = Path(__file__).parent / "site"
+STATE_FILE = Path(__file__).parent / "published.csv"
 FEED_FILE = Path(__file__).parent / "feed.xml"
-PAGES_PER_RUN = 1
+PAGES_PER_RUN = 10  # 10 pages/day across all active books
 
 FEED_TITLE = "Daily Reader"
 FEED_LINK = "https://mkeoliya.github.io/daily-reader/"
 FEED_DESC = "A page a day from my reading list."
 
-# Markdown extensions for nice styled output
+# Email config
+EMAIL_TO = "keoliyamayank@gmail.com"
+EMAIL_FROM = "keoliyamayank@gmail.com"
+
+# Markdown extensions for non-PDF fallback
 MD_EXTENSIONS = [
     "tables",
     "fenced_code",
@@ -38,37 +54,94 @@ MD_EXTENSIONS = [
     "md_in_html",
 ]
 
-# Minimal CSS inlined into each article for readability in RSS readers
-ARTICLE_CSS = """\
-<style>
-  body { font-family: Georgia, 'Times New Roman', serif; line-height: 1.6; color: #222; max-width: 680px; margin: 0 auto; }
-  h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
-  pre { background: #f5f5f5; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.9em; }
-  code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
-  pre code { background: none; padding: 0; }
-  blockquote { border-left: 3px solid #ccc; margin: 1em 0; padding: 0.5em 1em; color: #555; }
-  table { border-collapse: collapse; margin: 1em 0; }
-  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
-  th { background: #f5f5f5; }
-  img { max-width: 100%; height: auto; }
-</style>
-"""
+# Lazy-init: converter is created on first use to avoid model loading overhead
+_converter: Optional[MarkerConverter] = None
+
+logger = logging.getLogger(__name__)
+
+
+def get_converter() -> MarkerConverter:
+    """Lazy singleton for the MarkerConverter (models are heavy)."""
+    global _converter
+    if _converter is None:
+        logger.info("Initializing Marker models...")
+        _converter = MarkerConverter()
+    return _converter
+
+
+def get_email_sender():
+    """Lazy-init email sender (only when --send-email is used)."""
+    from redmail import EmailSender
+
+    return EmailSender(
+        host="smtp.gmail.com",
+        port=587,
+        username=EMAIL_FROM,
+        password=os.environ["GMAIL_APP_PASSWORD"],
+    )
+
+
+# ---------------------------------------------------------------------------
+# State (append-only CSV: file, page, total_pages, guid, pubdate)
+# ---------------------------------------------------------------------------
+
+CSV_FIELDS = ["file", "page", "total_pages", "guid", "pubdate", "title"]
+
+
+def load_published() -> list[dict]:
+    """Load all previously published items from CSV."""
+    if not STATE_FILE.exists():
+        return []
+    with open(STATE_FILE, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def append_published(items: list[dict]):
+    """Append new items to the CSV state file."""
+    write_header = not STATE_FILE.exists()
+    with open(STATE_FILE, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+        if write_header:
+            writer.writeheader()
+        for item in items:
+            writer.writerow({
+                "file": item["source_file"],
+                "page": item["page_num"],
+                "total_pages": item["total_pages"],
+                "guid": item["guid"],
+                "pubdate": item["pubDate"],
+                "title": item["title"],
+            })
+
+
+def get_current_position(published: list[dict]) -> tuple[int, int]:
+    """Determine which file/page to resume from based on published history."""
+    if not published:
+        return 0, 0
+
+    files = get_document_files()
+    file_names = [f.name for f in files]
+
+    last = published[-1]
+    last_file = last["file"]
+    last_page = int(last["page"])
+    last_total = int(last["total_pages"])
+
+    if last_file not in file_names:
+        return 0, 0
+
+    file_idx = file_names.index(last_file)
+
+    if last_page >= last_total:
+        # Finished this file, move to next
+        return file_idx + 1, 0
+    else:
+        return file_idx, last_page
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def load_state() -> dict:
-    """Load progress state from disk."""
-    if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text())
-    return {"current_file_index": 0, "current_page": 0, "items": []}
-
-
-def save_state(state: dict):
-    """Persist progress state."""
-    STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
 def get_document_files() -> list[Path]:
@@ -78,8 +151,8 @@ def get_document_files() -> list[Path]:
     return files
 
 
-def split_into_pages(text: str, lines_per_page: int = 40) -> list[str]:
-    """Split a text document into pages of roughly `lines_per_page` lines."""
+def split_text_into_pages(text: str, lines_per_page: int = 40) -> list[str]:
+    """Split a text/markdown document into pages. Fallback for non-PDF files."""
     lines = text.splitlines(keepends=True)
     pages = []
     for i in range(0, len(lines), lines_per_page):
@@ -90,9 +163,9 @@ def split_into_pages(text: str, lines_per_page: int = 40) -> list[str]:
 
 
 def md_to_styled_html(md_text: str) -> str:
-    """Convert markdown text to styled HTML."""
+    """Convert markdown text to styled HTML. Fallback for non-PDF files."""
     html_body = markdown.markdown(md_text, extensions=MD_EXTENSIONS)
-    return ARTICLE_CSS + html_body
+    return html_body
 
 
 def make_guid(filepath: str, page_num: int) -> str:
@@ -101,70 +174,249 @@ def make_guid(filepath: str, page_num: int) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
+def write_page_html(item: dict, site_dir: Path):
+    """Write a styled HTML page to the site directory."""
+    page_dir = site_dir / "pages"
+    page_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"{item['guid']}.html"
+    filepath = page_dir / filename
+    filepath.write_text(item["html_full"])
+
+    # Save images if present
+    if item.get("images"):
+        for img_name, img_data in item["images"].items():
+            img_path = page_dir / img_name
+            if hasattr(img_data, "save"):
+                # PIL Image
+                img_data.save(str(img_path))
+            elif isinstance(img_data, bytes):
+                img_path.write_bytes(img_data)
+
+    return f"{FEED_LINK}pages/{filename}"
+
+
+def write_today_page(items: list[dict], site_dir: Path):
+    """Write the 'Today's Reading' index page."""
+    site_dir.mkdir(parents=True, exist_ok=True)
+
+    today_items = []
+    for item in items:
+        today_items.append({
+            "title": item["title"],
+            "subtitle": f"~{_estimate_reading_time(item.get('description', ''))} min read",
+            "url": item.get("page_url", "#"),
+        })
+
+    html = render_today_page(today_items)
+    (site_dir / "index.html").write_text(html)
+
+
+# ---------------------------------------------------------------------------
+# Email (teaser + link)
+# ---------------------------------------------------------------------------
+
+
+def send_email(items: list[dict]):
+    """Send a teaser email with links to the full pages on GitHub Pages."""
+    # Build teaser list
+    links_html = ""
+    for item in items:
+        url = item.get("page_url", FEED_LINK)
+        links_html += f'<li><a href="{url}">{item["title"]}</a></li>\n'
+
+    today = datetime.date.today().strftime("%B %d, %Y")
+    html_body = f"""\
+<html>
+<head>
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; color: #333; }}
+  h1 {{ font-size: 1.3em; }}
+  ul {{ padding-left: 1.2em; }}
+  li {{ margin-bottom: 0.5em; }}
+  a {{ color: #2d5a8e; }}
+  .footer {{ font-size: 0.8em; color: #999; margin-top: 2em; border-top: 1px solid #eee; padding-top: 1em; }}
+</style>
+</head>
+<body>
+  <h1>📖 {FEED_TITLE}</h1>
+  <p>{len(items)} new page(s) — {today}</p>
+  <ul>
+    {links_html}
+  </ul>
+  <p><a href="{FEED_LINK}">Read on Daily Reader →</a></p>
+  <p class="footer">Sent by Daily Reader</p>
+</body>
+</html>"""
+
+    gmail = get_email_sender()
+    gmail.send(
+        subject=f"📖 {FEED_TITLE} — {items[0]['title']}",
+        receivers=[EMAIL_TO],
+        html=html_body,
+    )
+    print(f"  ✉ Email sent to {EMAIL_TO}")
+
+
 # ---------------------------------------------------------------------------
 # Core
 # ---------------------------------------------------------------------------
 
-def generate_new_items(state: dict, pages_per_run: int) -> list[dict]:
-    """Generate the next batch of feed items, updating state in-place."""
+
+def convert_pdf_pages(filepath: Path, start_page: int, count: int) -> list[dict]:
+    """Convert specific pages from a PDF using Marker.
+
+    Returns a list of dicts with html_full, description (snippet), images, etc.
+    Marker converts the full PDF, then we extract the requested page range.
+    """
+    converter = get_converter()
+    result = converter.convert(str(filepath))
+
+    total_pages = len(result.metadata.get("page_stats", []))
+    pages_to_take = min(count, total_pages - start_page)
+
+    # The full HTML contains all pages wrapped in <div class='page'>.
+    # For individual page items, we create per-page entries from the full output.
+    items = []
+    for i in range(pages_to_take):
+        page_num = start_page + i + 1  # 1-indexed
+        progress_pct = (page_num / total_pages) * 100
+
+        # For each page item, create a standalone styled HTML
+        page_html = render_page_html(
+            body_html=result.html.split("<main>")[1].split("</main>")[0] if i == 0 else "",
+            title=f"{filepath.stem}",
+            page_info=f"Page {page_num} of {total_pages}",
+            progress_pct=progress_pct,
+            is_last_page=(page_num == total_pages),
+        )
+
+        guid = make_guid(str(filepath), page_num)
+        # Description for RSS — just a text snippet
+        import re
+        body_text = re.sub(r"<[^>]+>", "", result.html)[:300]
+
+        items.append({
+            "title": f"{filepath.stem} — Page {page_num}/{total_pages}",
+            "description": body_text + "...",
+            "html_full": page_html,
+            "images": result.images if i == 0 else {},  # images go with first page
+            "guid": guid,
+            "pubDate": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "source_file": filepath.name,
+            "page_num": page_num,
+            "total_pages": total_pages,
+        })
+
+    return items
+
+
+def convert_text_pages(filepath: Path, start_page: int, count: int) -> list[dict]:
+    """Convert pages from a markdown/text file. Fallback for non-PDF files."""
+    text = filepath.read_text()
+    pages = split_text_into_pages(text)
+    total_pages = len(pages)
+
+    pages_to_take = min(count, total_pages - start_page)
+    items = []
+
+    for i in range(pages_to_take):
+        page_idx = start_page + i
+        page_num = page_idx + 1
+        page_content = pages[page_idx]
+        html_body = md_to_styled_html(page_content)
+        progress_pct = (page_num / total_pages) * 100
+
+        page_html = render_page_html(
+            body_html=html_body,
+            title=filepath.stem,
+            page_info=f"Page {page_num} of {total_pages}",
+            progress_pct=progress_pct,
+            is_last_page=(page_num == total_pages),
+        )
+
+        guid = make_guid(str(filepath), page_num)
+        items.append({
+            "title": f"{filepath.stem} — Page {page_num}/{total_pages}",
+            "description": html_body,
+            "html_full": page_html,
+            "images": {},
+            "guid": guid,
+            "pubDate": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "source_file": filepath.name,
+            "page_num": page_num,
+            "total_pages": total_pages,
+        })
+
+    return items
+
+
+def generate_new_items(pages_per_run: int) -> list[dict]:
+    """Generate the next batch of feed items."""
     files = get_document_files()
     if not files:
         print("No documents found in data/")
         return []
 
+    published = load_published()
+    file_idx, page_idx = get_current_position(published)
+
     new_items = []
     remaining = pages_per_run
 
     while remaining > 0:
-        file_idx = state["current_file_index"]
         if file_idx >= len(files):
             print("All documents have been fully published!")
             break
 
         filepath = files[file_idx]
-        text = filepath.read_text()
-        pages = split_into_pages(text)
-        page_idx = state["current_page"]
 
-        if page_idx >= len(pages):
-            # Move to next file
-            state["current_file_index"] += 1
-            state["current_page"] = 0
+        if filepath.suffix.lower() == ".pdf":
+            items = convert_pdf_pages(filepath, page_idx, remaining)
+        else:
+            items = convert_text_pages(filepath, page_idx, remaining)
+
+        if not items:
+            file_idx += 1
+            page_idx = 0
             continue
 
-        # Grab as many pages as we need from this file
-        pages_to_take = min(remaining, len(pages) - page_idx)
-        for i in range(pages_to_take):
-            p = page_idx + i
-            page_content = pages[p]
-            html = md_to_styled_html(page_content)
-            guid = make_guid(str(filepath), p)
+        new_items.extend(items)
+        page_idx += len(items)
+        remaining -= len(items)
 
-            item = {
-                "title": f"{filepath.stem} — Page {p + 1}/{len(pages)}",
-                "description": html,
-                "guid": guid,
-                "pubDate": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                "source_file": str(filepath.name),
-                "page_num": p + 1,
-            }
-            new_items.append(item)
-
-        state["current_page"] = page_idx + pages_to_take
-        remaining -= pages_to_take
+        # Check if we finished this file
+        if items and items[-1]["page_num"] >= items[-1]["total_pages"]:
+            file_idx += 1
+            page_idx = 0
 
     return new_items
 
 
-def build_feed(all_items: list[dict]) -> str:
-    """Build the full RSS feed XML from stored items."""
+def build_feed(published: list[dict], new_items: list[dict]) -> str:
+    """Build the full RSS feed XML from all published + new items."""
     feed_items = []
-    for item_data in all_items:
+
+    # Rebuild from CSV history (lightweight — just title/guid/date)
+    for row in published:
+        pub = datetime.datetime.fromisoformat(row["pubdate"])
+        feed_items.append(
+            rfeed.Item(
+                title=row["title"],
+                guid=rfeed.Guid(row["guid"]),
+                pubDate=pub,
+            )
+        )
+
+    # Add new items with links to GitHub Pages
+    for item_data in new_items:
         pub = datetime.datetime.fromisoformat(item_data["pubDate"])
+        page_url = item_data.get("page_url", "")
         feed_items.append(
             rfeed.Item(
                 title=item_data["title"],
                 description=item_data["description"],
+                link=page_url,
                 guid=rfeed.Guid(item_data["guid"]),
                 pubDate=pub,
             )
@@ -185,13 +437,14 @@ def build_feed(all_items: list[dict]) -> str:
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(description="Generate RSS feed from documents")
     parser.add_argument(
         "--pages-per-run",
         type=int,
         default=PAGES_PER_RUN,
-        help="Number of pages to publish per run (default: 1)",
+        help="Number of pages to publish per run (default: 10)",
     )
     parser.add_argument(
         "--output",
@@ -199,25 +452,42 @@ def main():
         default=FEED_FILE,
         help="Output RSS feed file path",
     )
+    parser.add_argument(
+        "--send-email",
+        action="store_true",
+        help="Send a teaser email with links to the new pages",
+    )
     args = parser.parse_args()
 
-    # Load state
-    state = load_state()
+    # Ensure site directory exists
+    SITE_DIR.mkdir(parents=True, exist_ok=True)
 
     # Generate new items
-    new_items = generate_new_items(state, args.pages_per_run)
+    published = load_published()
+    new_items = generate_new_items(args.pages_per_run)
+
     if new_items:
-        state["items"].extend(new_items)
         for item in new_items:
-            print(f"  + {item['title']}")
+            # Write each page as a standalone HTML file
+            page_url = write_page_html(item, SITE_DIR)
+            item["page_url"] = page_url
+            print(f"  + {item['title']} → {page_url}")
+
+        # Write today's reading index
+        write_today_page(new_items, SITE_DIR)
+        print(f"  📄 Today's reading: {SITE_DIR / 'index.html'}")
+
+        # Send email if requested
+        if args.send_email:
+            send_email(new_items)
+
+        # Append to CSV state
+        append_published(new_items)
 
     # Build and write feed
-    rss_xml = build_feed(state["items"])
+    rss_xml = build_feed(published, new_items)
     args.output.write_text(rss_xml)
-    print(f"\nFeed written to {args.output} ({len(state['items'])} total items)")
-
-    # Save state
-    save_state(state)
+    print(f"\nFeed written to {args.output} ({len(published) + len(new_items)} total items)")
 
 
 if __name__ == "__main__":

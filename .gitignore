@@ -3,8 +3,16 @@
 __pycache__/
 *.pyc
 
-# State (don't ignore — we want this tracked)
-# state.json
+# Secrets
+.env
+
+# Generated output
+output/
+site/
+published.csv
+
+# Source PDFs (large, user-supplied)
+data/
 
 # OS
 .DS_Store
