@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
+    color-scheme: light;
     --text: #1a1a2e;
     --text-secondary: #4a4a6a;
     --text-muted: #8888a0;
@@ -20,20 +21,6 @@
     --border: #e2e0dc;
     --max-width: 680px;
     --radius: 8px;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text: #e0e0e8;
-        --text-secondary: #a0a0b8;
-        --text-muted: #6a6a80;
-        --bg: #0f0f14;
-        --bg-alt: #161620;
-        --bg-code: #1c1c28;
-        --accent: #5b9bd5;
-        --accent-light: #1a2a3e;
-        --border: #2a2a3a;
-    }
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -92,7 +79,15 @@ body {
 .dr-progress-fill {
     height: 100%;
     background: var(--accent);
-    transition: width 0.3s ease;
+    transform-origin: left;
+    animation: dr-progress-grow linear;
+    animation-duration: 1ms;  /* Firefox requires this */
+    animation-timeline: scroll();
+}
+
+@keyframes dr-progress-grow {
+    from { scale: 0 1; }
+    to   { scale: 1 1; }
 }
 
 .dr-done {
@@ -252,14 +247,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
     
     <li>
       <div class="book-info">
-        <div class="book-title"><a href="https://mkeoliya.github.io/daily-reader/pages/2026-03-21/">Deep Learning - First 10 Pages — Pages 1–10/10</a></div>
-        <div class="book-progress">~1 min read</div>
-      </div>
-    </li>
-    
-    <li>
-      <div class="book-info">
-        <div class="book-title"><a href="https://mkeoliya.github.io/daily-reader/pages/2026-03-21/">Deep Learning — Pages 1–10/656</a></div>
+        <div class="book-title"><a href="https://mkeoliya.github.io/daily-reader/pages/2026-03-21/">Deep Learning — Pages 11–30/656</a></div>
         <div class="book-progress">~1 min read</div>
       </div>
     </li>
@@ -267,6 +255,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
   </ul>
 </main>
 
+<div class="dr-progress-bar">
+  <div class="dr-progress-fill"></div>
+</div>
 
 </body>
 </html>

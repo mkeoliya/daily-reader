@@ -10,6 +10,7 @@ import datetime
 import os
 
 from dotenv import load_dotenv
+from redmail import EmailSender
 
 load_dotenv()
 
@@ -24,8 +25,6 @@ def send_email(items: list[dict]):
     Args:
         items: List of dicts with 'title' and 'page_url' keys.
     """
-    from redmail import EmailSender
-
     gmail = EmailSender(
         host="smtp.gmail.com",
         port=587,

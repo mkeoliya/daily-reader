@@ -20,11 +20,6 @@
   Done for today. See you tomorrow.
 </div>
 {% endif %}
-{% if progress_pct is not none %}
-<div class="dr-progress-bar">
-  <div class="dr-progress-fill" style="width: {{ "%.1f"|format(progress_pct) }}%"></div>
-</div>
-{% endif %}
 {% endblock %}
 {% block scripts %}
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>

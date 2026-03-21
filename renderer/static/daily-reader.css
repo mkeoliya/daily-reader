@@ -1,4 +1,5 @@
 :root {
+    color-scheme: light;
     --text: #1a1a2e;
     --text-secondary: #4a4a6a;
     --text-muted: #8888a0;
@@ -10,20 +11,6 @@
     --border: #e2e0dc;
     --max-width: 680px;
     --radius: 8px;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text: #e0e0e8;
-        --text-secondary: #a0a0b8;
-        --text-muted: #6a6a80;
-        --bg: #0f0f14;
-        --bg-alt: #161620;
-        --bg-code: #1c1c28;
-        --accent: #5b9bd5;
-        --accent-light: #1a2a3e;
-        --border: #2a2a3a;
-    }
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -82,7 +69,15 @@ body {
 .dr-progress-fill {
     height: 100%;
     background: var(--accent);
-    transition: width 0.3s ease;
+    transform-origin: left;
+    animation: dr-progress-grow linear;
+    animation-duration: 1ms;  /* Firefox requires this */
+    animation-timeline: scroll();
+}
+
+@keyframes dr-progress-grow {
+    from { scale: 0 1; }
+    to   { scale: 1 1; }
 }
 
 .dr-done {
