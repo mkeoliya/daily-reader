@@ -45,7 +45,7 @@ def generate(send_email: bool = False):
     # Collect all section content
     page_sections = []  # list of dicts for the template
     all_images = {}
-    pdf_splits = []  # (doc, first_page_0idx, count, filename) for PDF splitting
+    pdf_renders = []  # (doc, first_page_0idx, count, stem) for WebP rendering
 
     for section in sections:
         remaining = section.pages_per_day
@@ -70,19 +70,21 @@ def generate(send_email: bool = False):
             last_page = pages[-1].page_number
             combined_body = "\n".join(p.html for p in pages)
 
-            # Track PDF for desktop viewer
-            pdf_filename = None
+            # Track PDF pages for desktop viewer (rendered at build time)
+            pdf_pages = []
             if doc.is_pdf:
-                pdf_filename = f"{doc.title.lower().replace(' ', '-')}.pdf"
-                pdf_splits.append((doc, current_page, len(pages), pdf_filename))
+                stem = doc.title.lower().replace(' ', '-')
+                pdf_pages = [f"{stem}-p{first_page + i}.webp" for i in range(len(pages))]
+                pdf_renders.append((doc, current_page, len(pages), stem))
             elif doc.pdf_url:
-                pdf_filename = doc.pdf_url  # remote URL, no local split needed
+                # ArXiv: download and render at build time (TODO)
+                pass
 
             section_docs.append({
                 "title": doc.title,
                 "page_info": f"Pages {first_page}–{last_page} of {doc.total_pages}",
                 "body_html": combined_body,
-                "pdf_filename": pdf_filename,
+                "pdf_pages": pdf_pages,
             })
 
             # Collect images
@@ -147,9 +149,21 @@ def generate(send_email: bool = False):
         elif isinstance(img_data, bytes):
             img_path.write_bytes(img_data)
 
-    # Split PDFs for desktop viewer
-    for doc, start_page, count, filename in pdf_splits:
-        doc.split_pages(start_page, count, page_dir / filename)
+    # Render PDF pages to WebP images for desktop viewer
+    import pypdfium2 as pdfium
+    from PIL import Image as PILImage
+    RENDER_SCALE = 2.5
+    WEBP_QUALITY = 95
+    for doc, start_page, count, stem in pdf_renders:
+        pdf_path = doc.split_pages(start_page, count, page_dir / f"{stem}.pdf")
+        pdf_doc = pdfium.PdfDocument(str(pdf_path))
+        for i in range(len(pdf_doc)):
+            page = pdf_doc[i]
+            bmp = page.render(scale=RENDER_SCALE)
+            img = bmp.to_pil()
+            img.save(str(page_dir / f"{stem}-p{start_page + i}.webp"), 'webp', quality=WEBP_QUALITY)
+        pdf_doc.close()
+        pdf_path.unlink()  # remove the split PDF, images are enough
 
     page_url = f"{FEED_LINK}pages/{today.isoformat()}/"
 

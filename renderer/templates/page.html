@@ -22,13 +22,19 @@
   <article id="section-{{ s.slug }}">
     <h2 class="dr-section-title">{{ s.section_name }}</h2>
     {% for doc in s.documents %}
-    <div class="dr-doc"{% if doc.pdf_filename %} data-pdf="{{ doc.pdf_filename }}"{% endif %}>
+    <div class="dr-doc">
       <div class="dr-doc-header">
         <h3>{{ doc.title }}</h3>
         <span class="dr-meta">{{ doc.page_info }}</span>
       </div>
       <div class="dr-doc-body">{{ doc.body_html | safe }}</div>
-      {% if doc.pdf_filename %}<div class="pdf-view"></div>{% endif %}
+      {% if doc.pdf_pages %}
+      <div class="pdf-view">
+        {% for img in doc.pdf_pages %}
+        <div class="pdf-page"><img src="{{ img }}" loading="lazy" alt="Page {{ loop.index }}"></div>
+        {% endfor %}
+      </div>
+      {% endif %}
     </div>
     {% endfor %}
   </article>

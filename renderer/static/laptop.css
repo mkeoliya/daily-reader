@@ -10,7 +10,7 @@
 }
 
 /* --- PDF view (toggled via keyboard shortcut) --- */
-body.view-pdf .dr-doc[data-pdf] .dr-doc-body {
+body.view-pdf .dr-doc .dr-doc-body {
   display: none;
 }
 
@@ -34,7 +34,7 @@ body.view-pdf .pdf-page + .pdf-page {
   border-top: 1px solid var(--border);
 }
 
-body.view-pdf .pdf-page canvas {
+body.view-pdf .pdf-page img {
   display: block;
   width: 100%;
   max-width: 720px;
@@ -88,7 +88,7 @@ body.view-pdf .pdf-page canvas {
     display: none;
   }
   /* Force markdown-only on mobile */
-  body.view-pdf .dr-doc[data-pdf] .dr-doc-body {
+  body.view-pdf .dr-doc .dr-doc-body {
     display: block !important;
   }
   body.view-pdf .pdf-view {
