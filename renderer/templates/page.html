@@ -13,6 +13,7 @@
     <span class="dr-meta-inline">{{ today_date }}</span>
     <span class="dr-sep">·</span>
     <span class="dr-meta-inline">~{{ reading_time }} min read</span>
+
   </div>
   {% if sections|length > 1 %}
   <nav class="dr-toc">
@@ -44,6 +45,7 @@
   Done for today. See you tomorrow.
 </div>
 {% if has_pdf %}
+<div class="dr-view-toast"></div>
 <script type="module">{% include "laptop.js" %}</script>
 {% endif %}
 {% endblock %}

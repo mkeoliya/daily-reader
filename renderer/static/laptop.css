@@ -1,46 +1,97 @@
-/* laptop.css — Desktop-only PDF viewer styles.
- * On wide screens, PDF documents show the original PDF via pdf.js.
- * On mobile, PDF docs fall back to Marker HTML (default).
+/* laptop.css — Toggle between Markdown and PDF view.
+ * Default: Markdown view (body text visible, PDF canvases hidden).
+ * Toggle: body.view-pdf shows PDF canvases, hides body text.
+ * Mobile: always Markdown, toggle hidden.
  */
 
-@media (min-width: 769px) {
-  /* Hide Marker HTML for PDF documents on desktop */
-  .dr-doc[data-pdf] .dr-doc-body {
-    display: none;
-  }
-
-  /* PDF viewer container (one per PDF document) */
-  .pdf-view {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    margin-top: 0.5rem;
-  }
-
-  .pdf-page {
-    scroll-snap-align: start;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    padding: 0.25rem 0;
-  }
-
-  .pdf-page + .pdf-page {
-    border-top: 1px solid var(--border);
-  }
-
-  .pdf-page canvas {
-    display: block;
-    width: 100%;
-    max-width: 720px;
-    height: auto;
-  }
+/* --- Default state: Markdown view --- */
+.pdf-view {
+  display: none;
 }
 
-/* Always hide pdf-view on mobile */
+/* --- PDF view (toggled via keyboard shortcut) --- */
+body.view-pdf .dr-doc[data-pdf] .dr-doc-body {
+  display: none;
+}
+
+body.view-pdf .pdf-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-top: 0.5rem;
+}
+
+body.view-pdf .pdf-page {
+  scroll-snap-align: start;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0.25rem 0;
+}
+
+body.view-pdf .pdf-page + .pdf-page {
+  border-top: 1px solid var(--border);
+}
+
+body.view-pdf .pdf-page canvas {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+}
+
+/* --- View toggle toast --- */
+.dr-view-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--text);
+  color: var(--bg);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1001;
+}
+
+.dr-view-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --- Keyboard hint in header --- */
+.dr-view-hint {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.dr-view-hint kbd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+}
+
+/* --- Hide toggle hint on mobile --- */
 @media (max-width: 768px) {
-  .pdf-view {
+  .dr-view-hint {
     display: none;
+  }
+  /* Force markdown-only on mobile */
+  body.view-pdf .dr-doc[data-pdf] .dr-doc-body {
+    display: block !important;
+  }
+  body.view-pdf .pdf-view {
+    display: none !important;
   }
 }
