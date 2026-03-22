@@ -104,13 +104,17 @@ body {
     letter-spacing: 0.05em;
     color: var(--text-muted);
     margin-top: 3rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--border);
 }
 
 article:first-child .dr-section-title {
     margin-top: 0;
+}
+
+.dr-doc:first-child h3 {
+    margin-top: 0.5rem;
 }
 
 .dr-doc + .dr-doc {

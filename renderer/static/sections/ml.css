@@ -1,0 +1,4 @@
+/* Section: ml — accent overrides for ML/textbook content */
+#section-ml {
+    --accent: #2d5a8e;
+}

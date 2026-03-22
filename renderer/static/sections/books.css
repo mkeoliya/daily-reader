@@ -1,0 +1,4 @@
+/* Section: books — accent overrides for book content */
+#section-books {
+    --accent: #8e5a2d;
+}
