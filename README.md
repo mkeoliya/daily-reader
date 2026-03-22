@@ -1,10 +1,10 @@
 # Daily Reader
 
-A mobile-first educational reading tool that converts PDF books and papers into a daily styled HTML reading session. Built to replace doomscrolling with focused, finite reading.
+A mobile-first educational reading tool that converts PDF books, markdown files, and arXiv papers into a daily styled HTML reading session. Built to replace doomscrolling with focused, finite reading.
 
 ## What is this?
 
-Daily Reader takes your PDF textbooks and markdown files, converts them page-by-page into styled, mobile-responsive HTML, and delivers them as:
+Daily Reader takes your PDF textbooks, markdown files, and arXiv papers, converts them into styled, mobile-responsive HTML, and delivers them as:
 
 - **A single daily page** combining all sections with skip-to-section navigation
 - **A daily email** with the first section's content and a link to the full page
@@ -24,7 +24,7 @@ Daily Reader takes your PDF textbooks and markdown files, converts them page-by-
 | 🎨 Per-section CSS theming | [`renderer/static/sections/*.css`](renderer/static/sections/) |
 | 📚 Bookshelf with SVG progress rings | [`engine.py: render_bookshelf()`](renderer/engine.py) + [`bookshelf.html`](renderer/templates/bookshelf.html) |
 | 📖 Section-based reading cadence | [`sections.py`](sections.py) + [`data/*/config.yaml`](data/ml/config.yaml) |
-| 📄 Document abstraction (PDF, Markdown) | [`documents.py`](documents.py) — `PdfDocument`, `MarkdownDocument` |
+| 📄 Document abstraction (PDF, Markdown, arXiv) | [`documents.py`](documents.py) — `PdfDocument`, `MarkdownDocument`, `ArxivDocument` |
 | 🔖 Queue-based config with bookmarks | [`config.yaml`](data/ml/config.yaml) — queue + start/page per doc |
 | ✉️ Daily teaser email | [`mailer.py`](mailer.py) |
 
@@ -36,13 +36,17 @@ data/
   │   ├── config.yaml             ← queue, pages_per_day, bookmarks
   │   ├── Deep Learning.pdf
   │   └── Differentiable.pdf
+  ├── arxiv/                      ← Section: arXiv papers
+  │   ├── config.yaml
+  │   └── attention-is-all-you-need.arxiv
   └── books/                      ← Section: general reading
       ├── config.yaml
       └── a.md
 
 documents.py                      ← Document/Page abstraction
   ├── PdfDocument                 ← Uses Marker ML pipeline
-  └── MarkdownDocument            ← Uses python-markdown
+  ├── MarkdownDocument            ← Uses python-markdown
+  └── ArxivDocument               ← Fetches HTML from ar5iv
 
 renderer/                         ← Jinja2 templating + CSS
   ├── engine.py                   ← render_daily_page(), render_bookshelf()
@@ -72,7 +76,7 @@ uv run python generate_feed.py --send-email
 ## Adding a Section
 
 1. Create a subdirectory under `data/`, e.g. `data/papers/`
-2. Drop PDFs or `.md` files into the directory
+2. Drop PDFs, `.md` files, or `.arxiv` files into the directory
 3. Add a `config.yaml` with a reading queue:
    ```yaml
    pages_per_day: 5
@@ -87,6 +91,14 @@ uv run python generate_feed.py --send-email
 4. Optionally add section styling at `renderer/static/sections/papers.css`
 5. Run `uv run python generate_feed.py`
 
+### Adding an arXiv paper
+
+Create a `.arxiv` file containing just the arXiv ID:
+```
+1706.03762
+```
+The HTML is fetched from [ar5iv](https://ar5iv.labs.arxiv.org/) and embedded as-is (one paper = one page). Fetched HTML is cached locally in `.cache/` to avoid re-downloading.
+
 ## Setup
 
 ```bash
@@ -100,6 +112,5 @@ echo 'GMAIL_APP_PASSWORD=your-app-password' > .env
 ## Future Roadmap
 
 - 🔁 Spaced repetition prompts (revisit key concepts from past readings)
-- 📄 arXiv HTML support (embed via `<iframe>` from ar5iv)
 - 🀄 Chinese character learning (card-based layout)
 - 📖 ePUB source support
