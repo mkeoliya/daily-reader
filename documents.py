@@ -40,6 +40,7 @@ class Document(ABC):
     """Abstract base for any document type (PDF, Markdown, ePub, etc.)."""
 
     is_pdf: bool = False
+    pdf_url: str | None = None  # remote PDF URL for viewer toggle
 
     def __init__(self, source_path: Path):
         self.source_path = source_path
@@ -357,6 +358,7 @@ class ArxivDocument(Document):
 
     def __init__(self, source_path: Path):
         self.arxiv_id = source_path.read_text().strip()
+        self.pdf_url = f"https://arxiv.org/pdf/{self.arxiv_id}"
         super().__init__(source_path)
 
     def _count_pages(self) -> int:

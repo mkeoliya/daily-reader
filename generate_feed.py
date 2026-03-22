@@ -77,6 +77,9 @@ def generate(send_email: bool = False):
                 has_pdf = True
                 pdf_filename = f"{doc.title.lower().replace(' ', '-')}.pdf"
                 pdf_splits.append((doc, current_page, len(pages), pdf_filename))
+            elif doc.pdf_url:
+                has_pdf = True
+                pdf_filename = doc.pdf_url  # remote URL, no local split needed
 
             section_docs.append({
                 "title": doc.title,
