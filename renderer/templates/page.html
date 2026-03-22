@@ -1,10 +1,5 @@
-{# page.html — Daily combined page with progressive section loading #}
+{# page.html — Daily page with progressive section loading #}
 {% extends "base.html" %}
-{% block head_extra %}
-{% if has_pdf %}
-<style>{% include "laptop.css" %}</style>
-{% endif %}
-{% endblock %}
 {% block body %}
 <header class="dr-header">
   <div class="dr-header-row">
@@ -13,7 +8,6 @@
     <span class="dr-meta-inline">{{ today_date }}</span>
     <span class="dr-sep">·</span>
     <span class="dr-meta-inline">~{{ reading_time }} min read</span>
-
   </div>
   {% if sections|length > 1 %}
   <nav class="dr-toc">
@@ -25,7 +19,19 @@
 </header>
 <main>
   {% set s = sections[0] %}
-  {% include "_article.html" %}
+  <article id="section-{{ s.slug }}">
+    <h2 class="dr-section-title">{{ s.section_name }}</h2>
+    {% for doc in s.documents %}
+    <div class="dr-doc"{% if doc.pdf_filename %} data-pdf="{{ doc.pdf_filename }}"{% endif %}>
+      <div class="dr-doc-header">
+        <h3>{{ doc.title }}</h3>
+        <span class="dr-meta">{{ doc.page_info }}</span>
+      </div>
+      <div class="dr-doc-body">{{ doc.body_html | safe }}</div>
+      {% if doc.pdf_filename %}<div class="pdf-view"></div>{% endif %}
+    </div>
+    {% endfor %}
+  </article>
   {% if sections|length > 1 %}
   <a href="section-{{ sections[1].slug }}.html" data-section>Continue to {{ sections[1].section_name }} →</a>
   {% else %}
@@ -35,19 +41,4 @@
   </div>
   {% endif %}
 </main>
-{% if has_pdf %}
-<div class="dr-view-toast"></div>
-<script type="module">{% include "laptop.js" %}</script>
-{% endif %}
-<script>
-document.onclick = async e => {
-  const a = e.target.closest('[data-section]');
-  if (!a) return;
-  e.preventDefault();
-  a.outerHTML = await (await fetch(a.href)).text();
-  const s = document.querySelector('article:last-of-type');
-  s.scrollIntoView({behavior:'smooth'});
-  renderMathInElement?.(s);
-};
-</script>
 {% endblock %}

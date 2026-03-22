@@ -54,7 +54,6 @@ def render_daily_page(
     sections: list[dict],
     title: str = "Daily Reader",
     today_date: str = "",
-    has_pdf: bool = False,
 ) -> str:
     """Render a combined daily page with all sections.
 
@@ -65,7 +64,6 @@ def render_daily_page(
               and optionally pdf_filename
         title: Page title.
         today_date: Formatted date string.
-        has_pdf: Whether any document has a PDF viewer attachment.
     """
     # Compute combined reading time and add slugs
     all_html = ""
@@ -82,21 +80,20 @@ def render_daily_page(
         today_date=today_date,
         reading_time=reading_time,
         sections=sections,
-        has_pdf=has_pdf,
     )
 
 
-def render_section_fragment(
+def render_section(
     section: dict,
     next_section: dict | None = None,
 ) -> str:
-    """Render a single section as a bare HTML fragment for lazy loading.
+    """Render a single section as bare HTML for lazy loading.
 
     Args:
         section: Dict with section_name, slug, documents.
         next_section: Dict for the next section (None if this is the last).
     """
-    tmpl = _env.get_template("section_fragment.html")
+    tmpl = _env.get_template("section.html")
     return tmpl.render(s=section, next_section=next_section)
 
 

@@ -13,16 +13,18 @@
 {% include "sections/ml.css" %}
 {% include "sections/books.css" %}
 {% include "sections/arxiv.css" %}
+{% include "laptop.css" %}
 </style>
-{% block head_extra %}{% endblock %}
 </head>
 <body>
 {% block body %}{% endblock %}
 <div class="dr-progress-bar">
   <div class="dr-progress-fill"></div>
 </div>
+<div class="dr-view-toast"></div>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
     onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false})"></script>
+<script>{% include "daily-reader.js" %}</script>
 </body>
 </html>

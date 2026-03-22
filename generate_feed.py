@@ -13,7 +13,7 @@ import datetime
 import logging
 from pathlib import Path
 
-from renderer import render_daily_page, render_section_fragment, _estimate_reading_time
+from renderer import render_daily_page, render_section, _estimate_reading_time
 from sections import load_sections, save_sections
 
 # ---------------------------------------------------------------------------
@@ -46,7 +46,6 @@ def generate(send_email: bool = False):
     page_sections = []  # list of dicts for the template
     all_images = {}
     pdf_splits = []  # (doc, first_page_0idx, count, filename) for PDF splitting
-    has_pdf = False
 
     for section in sections:
         remaining = section.pages_per_day
@@ -74,11 +73,9 @@ def generate(send_email: bool = False):
             # Track PDF for desktop viewer
             pdf_filename = None
             if doc.is_pdf:
-                has_pdf = True
                 pdf_filename = f"{doc.title.lower().replace(' ', '-')}.pdf"
                 pdf_splits.append((doc, current_page, len(pages), pdf_filename))
             elif doc.pdf_url:
-                has_pdf = True
                 pdf_filename = doc.pdf_url  # remote URL, no local split needed
 
             section_docs.append({
@@ -117,12 +114,14 @@ def generate(send_email: bool = False):
         print("All documents fully read!")
         return
 
+    # Sort sections: books first, then the rest
+    page_sections.sort(key=lambda s: s['section_name'] != 'books')
+
     # Render combined page
     page_html = render_daily_page(
         sections=page_sections,
         title=FEED_TITLE,
         today_date=today.strftime("%B %d, %Y"),
-        has_pdf=has_pdf,
     )
 
     # Write to pages/{date}/index.html
@@ -137,7 +136,7 @@ def generate(send_email: bool = False):
         next_s = page_sections[i + 1] if i + 1 < len(page_sections) else None
         if next_s:
             next_s["slug"] = _slugify(next_s["section_name"])
-        frag = render_section_fragment(s, next_s)
+        frag = render_section(s, next_s)
         (page_dir / f"section-{s['slug']}.html").write_text(frag)
 
     # Write images

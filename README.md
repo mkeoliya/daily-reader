@@ -6,7 +6,7 @@ A mobile-first educational reading tool that converts PDF books, markdown files,
 
 Daily Reader takes your PDF textbooks, markdown files, and arXiv papers, converts them into styled, mobile-responsive HTML, and delivers them as:
 
-- **A single daily page** combining all sections with skip-to-section navigation
+- **Progressive daily pages** — sections load one at a time (books first, then the rest), keeping the DOM small and scrolling smooth
 - **A daily email** with the first section's content and a link to the full page
 - **A static website** hosted on [GitHub Pages](https://mkeoliya.github.io/daily-reader/)
 
@@ -20,9 +20,9 @@ Daily Reader takes your PDF textbooks, markdown files, and arXiv papers, convert
 | 📊 CSS-only scroll progress bar | [`daily-reader.css: @keyframes dr-progress-grow`](renderer/static/daily-reader.css) |
 | ⏱️ Reading time estimate | [`engine.py: _estimate_reading_time()`](renderer/engine.py) |
 | ✅ "Done for today" end marker | [`page.html: .dr-done`](renderer/templates/page.html) |
-| 📚 Multi-section combined page with skip-to nav | [`page.html`](renderer/templates/page.html) + [`engine.py: render_daily_page()`](renderer/engine.py) |
+| 📖 Progressive section loading (books first) | [`daily-reader.js`](renderer/static/daily-reader.js) + [`section.html`](renderer/templates/section.html) |
 | 🎨 Per-section CSS theming | [`renderer/static/sections/*.css`](renderer/static/sections/) |
-| 📚 Bookshelf with SVG progress rings | [`engine.py: render_bookshelf()`](renderer/engine.py) + [`bookshelf.html`](renderer/templates/bookshelf.html) |
+| 📄 Lazy PDF viewer (Ctrl+Shift+P) | [`daily-reader.js`](renderer/static/daily-reader.js) + [`laptop.css`](renderer/static/laptop.css) |
 | 📖 Section-based reading cadence | [`sections.py`](sections.py) + [`data/*/config.yaml`](data/ml/config.yaml) |
 | 📄 Document abstraction (PDF, Markdown, arXiv) | [`documents.py`](documents.py) — `PdfDocument`, `MarkdownDocument`, `ArxivDocument` |
 | 🔖 Queue-based config with bookmarks | [`config.yaml`](data/ml/config.yaml) — queue + start/page per doc |
@@ -49,13 +49,15 @@ documents.py                      ← Document/Page abstraction
   └── ArxivDocument               ← Fetches HTML from ar5iv
 
 renderer/                         ← Jinja2 templating + CSS
-  ├── engine.py                   ← render_daily_page(), render_bookshelf()
+  ├── engine.py                   ← render_daily_page(), render_section()
   ├── templates/
-  │   ├── base.html               ← Fonts, KaTeX, progress bar
-  │   ├── page.html               ← Multi-section daily page
-  │   └── bookshelf.html
+  │   ├── base.html               ← Fonts, KaTeX, scripts, progress bar
+  │   ├── page.html               ← First section (books) daily page
+  │   └── section.html            ← Lazy-loaded section fragment
   └── static/
       ├── daily-reader.css        ← Core styles
+      ├── daily-reader.js         ← Section loading + PDF viewer
+      ├── laptop.css              ← PDF viewer styles
       └── sections/               ← Per-section CSS overrides
 
 sections.py                       ← Section config + queue management
