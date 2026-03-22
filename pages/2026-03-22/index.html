@@ -266,6 +266,38 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
 .page { margin-bottom: 2rem; }
 .page + .page { padding-top: 2rem; border-top: 1px dashed var(--border); }
 
+/* -- Progressive section gating (checkbox hack) -- */
+input[hidden] + article { display: none; }
+input[hidden]:checked + article {
+    display: block;
+    animation: dr-reveal 0.5s ease-out;
+}
+input[hidden]:not(:checked) ~ .dr-done { display: none; }
+
+@keyframes dr-reveal {
+    from { opacity: 0; transform: translateY(1.5rem); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+article > label[for^="unlock-"] {
+    display: block;
+    text-align: center;
+    margin-top: 2.5rem;
+    padding: 0.6rem 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--accent);
+    border: 1px dashed var(--accent);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.2s, border-style 0.2s;
+}
+
+article > label[for^="unlock-"]:hover {
+    background: var(--accent-light);
+    border-style: solid;
+}
+
 /* -- Responsive -- */
 @media (max-width: 600px) {
     html { font-size: 16px; }
@@ -462,6 +494,7 @@ body.view-pdf .pdf-page canvas {
   
 </header>
 <main>
+  
   
   <article id="section-arxiv">
     <h2 class="dr-section-title">arxiv</h2>
@@ -2046,6 +2079,7 @@ Long Papers)</span>, pages 434–443. ACL, August 2013.
       <div class="pdf-view"></div>
     </div>
     
+    
   </article>
   
 </main>
@@ -2056,57 +2090,16 @@ Long Papers)</span>, pages 434–443. ACL, August 2013.
 
 <div class="dr-view-toast"></div>
 <script type="module">/* laptop.js — Toggle between Markdown and PDF view.
- * PDFs load eagerly in the background so they're ready when toggled.
+ * PDFs load lazily in the background so they're ready when toggled.
  * Keyboard shortcut: Ctrl+Shift+P (Cmd+Shift+P on Mac).
  * Default view: Markdown.
  */
 
-(async () => {
-  // Only load PDF.js on desktop-width screens
-  if (!window.matchMedia('(min-width: 769px)').matches) return;
+// Only load PDF.js on desktop-width screens
+if (window.matchMedia('(min-width: 769px)').matches) {
 
-  const pdfjsLib = await import(
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs'
-  );
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.worker.min.mjs';
-
-  const RENDER_SCALE = Math.max(window.devicePixelRatio || 1, 2.5);
-  const pdfDocs = document.querySelectorAll('.dr-doc[data-pdf]');
   const allPageEls = [];
   let currentPage = 0;
-
-  // --- Eagerly render all PDFs in the background ---
-  for (const docEl of pdfDocs) {
-    const pdfUrl = docEl.dataset.pdf;
-    const container = docEl.querySelector('.pdf-view');
-    if (!container) continue;
-
-    try {
-      const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: RENDER_SCALE });
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'pdf-page';
-
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({
-          canvasContext: canvas.getContext('2d'),
-          viewport,
-        }).promise;
-
-        wrapper.appendChild(canvas);
-        container.appendChild(wrapper);
-        allPageEls.push(wrapper);
-      }
-    } catch (err) {
-      console.warn('pdf.js: failed to load', pdfUrl, err);
-    }
-  }
 
   // --- Toast helper ---
   const toast = document.querySelector('.dr-view-toast');
@@ -2119,19 +2112,7 @@ Long Papers)</span>, pages 434–443. ACL, August 2013.
     toastTimer = setTimeout(() => toast.classList.remove('show'), 1200);
   }
 
-  // --- IntersectionObserver for page tracking (PDF view) ---
-  if (allPageEls.length > 0) {
-    const observer = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          currentPage = allPageEls.indexOf(e.target);
-        }
-      }
-    }, { threshold: 0.5 });
-    allPageEls.forEach((el) => observer.observe(el));
-  }
-
-  // --- Keyboard shortcut: Ctrl+Shift+P / Cmd+Shift+P ---
+  // --- Keyboard shortcut (registered immediately) ---
   document.addEventListener('keydown', (e) => {
     const isPdfView = document.body.classList.contains('view-pdf');
 
@@ -2157,8 +2138,68 @@ Long Papers)</span>, pages 434–443. ACL, August 2013.
       allPageEls[prev].scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
-})();</script>
 
+  // --- Load and render PDFs in the background (async) ---
+  (async () => {
+    const pdfjsLib = await import(
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs'
+    );
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.worker.min.mjs';
+
+    const RENDER_SCALE = Math.max(window.devicePixelRatio || 1, 2.5);
+    const pdfDocs = document.querySelectorAll('.dr-doc[data-pdf]');
+
+    for (const docEl of pdfDocs) {
+      const pdfUrl = docEl.dataset.pdf;
+      const container = docEl.querySelector('.pdf-view');
+      if (!container) continue;
+
+      try {
+        const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: RENDER_SCALE });
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'pdf-page';
+
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({
+            canvasContext: canvas.getContext('2d'),
+            viewport,
+          }).promise;
+
+          wrapper.appendChild(canvas);
+          container.appendChild(wrapper);
+          allPageEls.push(wrapper);
+        }
+      } catch (err) {
+        console.warn('pdf.js: failed to load', pdfUrl, err);
+      }
+    }
+
+    // --- IntersectionObserver for page tracking (PDF view) ---
+    if (allPageEls.length > 0) {
+      const observer = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            currentPage = allPageEls.indexOf(e.target);
+          }
+        }
+      }, { threshold: 0.5 });
+      allPageEls.forEach((el) => observer.observe(el));
+    }
+  })();
+}</script>
+
+<script>
+document.addEventListener('change', e => {
+  if (e.target.hidden) e.target.nextElementSibling?.scrollIntoView({behavior: 'smooth', block: 'start'});
+});
+</script>
 
 <div class="dr-progress-bar">
   <div class="dr-progress-fill"></div>
