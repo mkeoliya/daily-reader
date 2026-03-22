@@ -1,4 +1,22 @@
-/* Section: books — accent overrides for book content */
+/* Section: books — warm tones for book content */
 #section-books {
     --accent: #8e5a2d;
+    --bg: #faf6f1;
+    --bg-alt: #f5ede3;
+    --border: #e0d5c8;
+    /* Gradient: fade from page bg → warm tone → page bg */
+    background: linear-gradient(
+        to bottom,
+        #fefefe 0%,
+        #faf6f1 6rem,
+        #faf6f1 calc(100% - 6rem),
+        #fefefe 100%
+    );
+    /* Extend background beyond body's max-width to fill viewport */
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    padding-left: calc(50vw - 50%);
+    padding-right: calc(50vw - 50%);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }

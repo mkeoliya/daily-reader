@@ -13,52 +13,19 @@ import datetime
 import logging
 from pathlib import Path
 
-import yaml
-
-from documents import Document
 from renderer import render_daily_page, _estimate_reading_time
-from sections import load_sections
+from sections import load_sections, save_sections
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 
 SITE_DIR = Path(__file__).parent  # output to repo root for GitHub Pages
-STATE_FILE = Path(__file__).parent / "state.yaml"
 
 FEED_TITLE = "Daily Reader"
 FEED_LINK = "https://mkeoliya.github.io/daily-reader/"
 
 logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# State (YAML bookmark: file path → current page number)
-# ---------------------------------------------------------------------------
-
-
-def load_state() -> dict[str, int]:
-    """Load bookmark state: {relative_path: current_page}."""
-    if not STATE_FILE.exists():
-        return {}
-    with open(STATE_FILE) as f:
-        return yaml.safe_load(f) or {}
-
-
-def save_state(state: dict[str, int]):
-    """Write bookmark state back to YAML."""
-    with open(STATE_FILE, "w") as f:
-        yaml.dump(state, f, default_flow_style=False)
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def relative_path(doc: Document, data_dir: Path) -> str:
-    """Get a stable relative path key for state tracking."""
-    return str(doc.source_path.relative_to(data_dir))
 
 
 # ---------------------------------------------------------------------------
@@ -73,24 +40,24 @@ def generate(send_email: bool = False):
         print("No sections found in data/. Add a config.yaml to a subdirectory.")
         return
 
-    state = load_state()
-    data_dir = Path(__file__).parent / "data"
     today = datetime.date.today()
 
     # Collect all section content
     page_sections = []  # list of dicts for the template
     all_images = {}
+    pdf_splits = []  # (doc, first_page_0idx, count, filename) for PDF splitting
+    has_pdf = False
 
     for section in sections:
         remaining = section.pages_per_day
         section_docs = []
 
-        for doc in section.documents:
+        for entry in section.queue:
             if remaining <= 0:
                 break
 
-            key = relative_path(doc, data_dir)
-            current_page = state.get(key, 0)
+            doc = entry.doc
+            current_page = entry.current_page
 
             if current_page >= doc.total_pages:
                 continue  # finished this document
@@ -104,20 +71,38 @@ def generate(send_email: bool = False):
             last_page = pages[-1].page_number
             combined_body = "\n".join(p.html for p in pages)
 
+            # Track PDF for desktop viewer
+            pdf_filename = None
+            if doc.is_pdf:
+                has_pdf = True
+                pdf_filename = f"{doc.title.lower().replace(' ', '-')}.pdf"
+                pdf_splits.append((doc, current_page, len(pages), pdf_filename))
+
             section_docs.append({
                 "title": doc.title,
                 "page_info": f"Pages {first_page}–{last_page} of {doc.total_pages}",
                 "body_html": combined_body,
+                "pdf_filename": pdf_filename,
             })
 
             # Collect images
             for p in pages:
                 all_images.update(p.images)
 
-            # Update state
-            state[key] = last_page
+            # Update bookmark in the queue entry
+            entry.current_page = last_page
             remaining -= len(pages)
             print(f"  [{section.name}] {doc.title} — Pages {first_page}–{last_page}/{doc.total_pages}")
+
+        # Move finished docs to the finished list
+        still_queued = []
+        for entry in section.queue:
+            if entry.current_page >= entry.doc.total_pages:
+                section.finished.append(entry.doc.source_path.name)
+                print(f"  [{section.name}] ✓ Finished: {entry.doc.title}")
+            else:
+                still_queued.append(entry)
+        section.queue = still_queued
 
         if section_docs:
             page_sections.append({
@@ -134,6 +119,7 @@ def generate(send_email: bool = False):
         sections=page_sections,
         title=FEED_TITLE,
         today_date=today.strftime("%B %d, %Y"),
+        has_pdf=has_pdf,
     )
 
     # Write to pages/{date}/index.html
@@ -149,15 +135,19 @@ def generate(send_email: bool = False):
         elif isinstance(img_data, bytes):
             img_path.write_bytes(img_data)
 
+    # Split PDFs for desktop viewer
+    for doc, start_page, count, filename in pdf_splits:
+        doc.split_pages(start_page, count, page_dir / filename)
+
     page_url = f"{FEED_LINK}pages/{today.isoformat()}/"
 
     # Write root index.html as redirect to today's page
     redirect_html = f'<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url={page_url}"></head></html>'
     (SITE_DIR / "index.html").write_text(redirect_html)
 
-    # Save state
-    save_state(state)
-    print(f"\nState saved to {STATE_FILE}")
+    # Save state back to config files
+    save_sections(sections)
+    print(f"\nState saved to section configs")
 
     # Send email
     if send_email:

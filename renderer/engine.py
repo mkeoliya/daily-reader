@@ -54,15 +54,18 @@ def render_daily_page(
     sections: list[dict],
     title: str = "Daily Reader",
     today_date: str = "",
+    has_pdf: bool = False,
 ) -> str:
     """Render a combined daily page with all sections.
 
     Args:
         sections: List of dicts, each with:
             - section_name: str (e.g. "ml", "books")
-            - documents: list of dicts with title, page_info, body_html
+            - documents: list of dicts with title, page_info, body_html,
+              and optionally pdf_filename
         title: Page title.
         today_date: Formatted date string.
+        has_pdf: Whether any document has a PDF viewer attachment.
     """
     # Compute combined reading time and add slugs
     all_html = ""
@@ -79,31 +82,40 @@ def render_daily_page(
         today_date=today_date,
         reading_time=reading_time,
         sections=sections,
+        has_pdf=has_pdf,
     )
 
 
-def render_bookshelf(
-    books: list, progress: dict[str, int] | None = None
-) -> str:
+def render_bookshelf(sections: list) -> str:
     """Render a minimalist bookshelf page with progress.
 
     Args:
-        books: List of objects with .title and .total_pages attributes.
-        progress: Dict mapping title → current page number.
+        sections: List of Section objects with .queue (DocumentQueue entries)
+                  and .finished lists.
     """
-    progress = progress or {}
-
     book_data = []
-    for book in books:
-        current = progress.get(book.title, 0)
-        pct = (current / book.total_pages * 100) if book.total_pages > 0 else 0
-        book_data.append({
-            "title": book.title,
-            "current": current,
-            "total": book.total_pages,
-            "pct": pct,
-            "pct_int": int(pct),
-        })
+    for section in sections:
+        for entry in section.queue:
+            total = entry.doc.total_pages
+            current = entry.current_page
+            pct = (current / total * 100) if total > 0 else 0
+            book_data.append({
+                "title": entry.doc.title,
+                "current": current,
+                "total": total,
+                "pct": pct,
+                "pct_int": int(pct),
+                "section": section.name,
+            })
+        for name in section.finished:
+            book_data.append({
+                "title": Path(name).stem,
+                "current": 1,
+                "total": 1,
+                "pct": 100,
+                "pct_int": 100,
+                "section": section.name,
+            })
 
     tmpl = _env.get_template("bookshelf.html")
     return tmpl.render(title="Bookshelf", books=book_data)

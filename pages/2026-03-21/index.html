@@ -41,30 +41,55 @@ body {
     background: var(--bg);
     max-width: var(--max-width);
     margin: 0 auto;
-    padding: 2rem 1.25rem 4rem;
+    padding: 1rem 1.25rem 4rem;
 }
 
 /* -- Header / progress -- */
 .dr-header {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
     border-bottom: 1px solid var(--border);
 }
 
-.dr-header h1 {
-    font-size: 1.5rem;
+.dr-header-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.dr-title {
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--text);
-    margin-bottom: 0.25rem;
+}
+
+.dr-sep {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.dr-meta-inline {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.dr-doc-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.dr-doc-header h3 {
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .dr-meta {
     font-size: 0.8rem;
     color: var(--text-muted);
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
     margin-bottom: 0.75rem;
 }
 
@@ -97,7 +122,7 @@ body {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
-    margin-top: 0.75rem;
+    margin-top: 0.35rem;
     font-family: 'Inter', sans-serif;
     font-size: 0.85rem;
 }
@@ -247,7 +272,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
     body { padding: 1rem 1rem 3rem; }
     h1 { font-size: 1.6rem; }
     h2 { font-size: 1.3rem; }
-    .dr-meta { flex-direction: column; gap: 0.25rem; }
+    .dr-doc-header { flex-direction: column; gap: 0.25rem; }
 }
 
 /* -- Bookshelf -- */
@@ -282,31 +307,271 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
 #section-ml {
     --accent: #2d5a8e;
 }
-/* Section: books — accent overrides for book content */
+/* Section: books — warm tones for book content */
 #section-books {
     --accent: #8e5a2d;
+    --bg: #faf6f1;
+    --bg-alt: #f5ede3;
+    --border: #e0d5c8;
+    /* Gradient: fade from page bg → warm tone → page bg */
+    background: linear-gradient(
+        to bottom,
+        #fefefe 0%,
+        #faf6f1 6rem,
+        #faf6f1 calc(100% - 6rem),
+        #fefefe 100%
+    );
+    /* Extend background beyond body's max-width to fill viewport */
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    padding-left: calc(50vw - 50%);
+    padding-right: calc(50vw - 50%);
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }
 </style>
+
+
+<style>/* laptop.css — Desktop-only PDF viewer styles.
+ * On wide screens, PDF documents show the original PDF via pdf.js.
+ * On mobile, PDF docs fall back to Marker HTML (default).
+ */
+
+@media (min-width: 769px) {
+  /* Hide Marker HTML for PDF documents on desktop */
+  .dr-doc[data-pdf] .dr-doc-body {
+    display: none;
+  }
+
+  /* PDF viewer container (one per PDF document) */
+  .pdf-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-top: 0.5rem;
+  }
+
+  .pdf-page {
+    scroll-snap-align: start;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 0.25rem 0;
+  }
+
+  .pdf-page + .pdf-page {
+    border-top: 1px solid var(--border);
+  }
+
+  .pdf-page canvas {
+    display: block;
+    width: 100%;
+    max-width: 720px;
+    height: auto;
+  }
+}
+
+/* Always hide pdf-view on mobile */
+@media (max-width: 768px) {
+  .pdf-view {
+    display: none;
+  }
+}</style>
+
+
 </head>
 <body>
 
 <header class="dr-header">
-  <h1>📖 Daily Reader</h1>
-  <div class="dr-meta">
-    <span>March 21, 2026</span>
-    <span>~38 min read</span>
+  <div class="dr-header-row">
+    <span class="dr-title">📖 Daily Reader</span>
+    <span class="dr-sep">·</span>
+    <span class="dr-meta-inline">March 21, 2026</span>
+    <span class="dr-sep">·</span>
+    <span class="dr-meta-inline">~41 min read</span>
   </div>
+  
+  <nav class="dr-toc">
+    
+    <a href="#section-books">books</a>
+    
+    <a href="#section-ml">ml</a>
+    
+  </nav>
   
 </header>
 <main>
   
+  <article id="section-books">
+    <h2 class="dr-section-title">books</h2>
+    
+    <div class="dr-doc">
+      <div class="dr-doc-header">
+        <h3>a</h3>
+        <span class="dr-meta">Pages 1–4 of 4</span>
+      </div>
+      <div class="dr-doc-body"><h1>An h1 header</h1>
+<p>Paragraphs are separated by a blank line.</p>
+<p>2nd paragraph. <em>Italic</em>, <strong>bold</strong>, and <code>monospace</code>. Itemized lists
+look like:</p>
+<ul>
+<li>this one</li>
+<li>that one</li>
+<li>the other one</li>
+</ul>
+<p>Note that --- not considering the asterisk --- the actual text
+content starts at 4-columns in.</p>
+<blockquote>
+<p>Block quotes are
+written like so.</p>
+<p>They can span multiple paragraphs,
+if you like.</p>
+</blockquote>
+<p>Use 3 dashes for an em-dash. Use 2 dashes for ranges (ex., "it's all
+in chapters 12--14"). Three dots ... will be converted to an ellipsis.
+Unicode is supported. ☺</p>
+<h2>An h2 header</h2>
+<p>Here's a numbered list:</p>
+<ol>
+<li>first item</li>
+<li>second item</li>
+<li>third item</li>
+</ol>
+<p>Note again how the actual text starts at 4 columns in (4 characters
+from the left side). Here's a code sample:</p>
+<div class="codehilite"><pre><span></span><code># Let me re-iterate ...
+</code></pre></div>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="nv">in</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span>..<span class="w"> </span><span class="mi">10</span><span class="w"> </span>{<span class="w"> </span><span class="k">do</span><span class="o">-</span><span class="nv">something</span><span class="ss">(</span><span class="nv">i</span><span class="ss">)</span><span class="w"> </span>}
+</code></pre></div>
+
+<p>As you probably guessed, indented 4 spaces. By the way, instead of
+indenting the block, you can use delimited blocks, if you like:</p>
+<div class="codehilite"><pre><span></span><code>define foobar() {
+    print &quot;Welcome to flavor country!&quot;;
+}
+</code></pre></div>
+
+<p>(which makes copying &amp; pasting easier). You can optionally mark the
+delimited block for Pandoc to syntax highlight it:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="c1"># Quick, count to ten!</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="c1"># (but not *too* quick)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="n">i</span>
+</code></pre></div>
+
+<h3>An h3 header</h3>
+<p>Now a nested list:</p>
+<ol>
+<li>
+<p>First, get these ingredients:</p>
+<ul>
+<li>carrots</li>
+<li>celery</li>
+<li>lentils</li>
+</ul>
+</li>
+<li>
+<p>Boil some water.</p>
+</li>
+<li>
+<p>Dump everything in the pot and follow
+    this algorithm:</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="w">    </span><span class="nv">find</span><span class="w"> </span><span class="nv">wooden</span><span class="w"> </span><span class="nv">spoon</span>
+<span class="w">    </span><span class="nv">uncover</span><span class="w"> </span><span class="nv">pot</span>
+<span class="w">    </span><span class="nv">stir</span>
+<span class="w">    </span><span class="nv">cover</span><span class="w"> </span><span class="nv">pot</span>
+<span class="w">    </span><span class="nv">balance</span><span class="w"> </span><span class="nv">wooden</span><span class="w"> </span><span class="nv">spoon</span><span class="w"> </span><span class="nv">precariously</span><span class="w"> </span><span class="nv">on</span><span class="w"> </span><span class="nv">pot</span><span class="w"> </span><span class="nv">handle</span>
+<span class="w">    </span><span class="k">wait</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="nv">minutes</span>
+<span class="w">    </span><span class="k">goto</span><span class="w"> </span><span class="nl">first</span><span class="w"> </span><span class="nv">step</span><span class="w"> </span><span class="ss">(</span><span class="nv">or</span><span class="w"> </span><span class="nv">shut</span><span class="w"> </span><span class="nv">off</span><span class="w"> </span><span class="nv">burner</span><span class="w"> </span><span class="nv">when</span><span class="w"> </span><span class="nv">done</span><span class="ss">)</span>
+
+<span class="k">Do</span><span class="w"> </span><span class="nv">not</span><span class="w"> </span><span class="nv">bump</span><span class="w"> </span><span class="nv">wooden</span><span class="w"> </span><span class="nv">spoon</span><span class="w"> </span><span class="nv">or</span><span class="w"> </span><span class="nv">it</span><span class="w"> </span><span class="nv">will</span><span class="w"> </span><span class="nv">fall</span>.
+</code></pre></div>
+
+<p>Notice again how text always lines up on 4-space indents (including
+that last line which continues item 3 above).</p>
+<p>Here's a link to <a href="http://foo.bar">a website</a>, to a <a href="local-doc.html">local
+doc</a>, and to a <a href="#an-h2-header">section heading in the current
+doc</a>. Here's a footnote <sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>.</p>
+<p>Tables can look like this:</p>
+<p>size  material      color</p>
+<hr />
+<p>9     leather       brown
+10    hemp canvas   natural
+11    glass         transparent</p>
+<p>Table: Shoes, their sizes, and what they're made of</p>
+<p>(The above is the caption for the table.) Pandoc also supports
+multi-line tables:</p>
+<hr />
+<p>keyword   text</p>
+<hr />
+<p>red       Sunsets, apples, and
+          other red or reddish
+          things.</p>
+<p>green     Leaves, grass, frogs</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Footnote text goes here.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+<div class="codehilite"><pre><span></span><code>      and other things it&#39;s
+      not easy being.
+</code></pre></div>
+
+<hr />
+<p>A horizontal rule follows.</p>
+<hr />
+<p>Here's a definition list:</p>
+<dl>
+<dt>apples</dt>
+<dd>
+<dl>
+<dt>Good for making applesauce.</dt>
+<dt>oranges</dt>
+<dd>
+<dl>
+<dt>Citrus!</dt>
+<dt>tomatoes</dt>
+<dd>There's no "e" in tomatoe.</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Again, text is indented 4 spaces. (Put a blank line between each
+term/definition pair to spread things out more.)</p>
+<p>Here's a "line block":</p>
+<p>| Line one
+|   Line too
+| Line tree</p>
+<p>and images can be specified like so:</p>
+<p><img alt="example image" src="example-image.jpg" title="An exemplary image" /></p>
+<p>Inline math equations go in like so: $\omega = d\phi / dt$. Display
+math should get its own line and be put in in double-dollarsigns:</p>
+<p>$$I = \int \rho R^{2} dV$$</p>
+<p>And note that you can backslash-escape any punctuation characters
+which you wish to be displayed literally, ex.: `foo`, *bar*, etc.</p></div>
+      
+    </div>
+    
+  </article>
+  
   <article id="section-ml">
     <h2 class="dr-section-title">ml</h2>
     
-    <div class="dr-doc">
-      <h3>Deep Learning</h3>
-      <div class="dr-meta"><span>Pages 21–40 of 656</span></div>
-      <div class="page" data-page-id="20"><p><img src="_page_20_Picture_0.jpeg"/></p><p><img src="_page_20_Picture_1.jpeg"/></p><p block-type="Text">Machine learning today is one of the most important, and fastest growing, fields of technology. Applications of machine learning are becoming ubiquitous, and solutions learned from data are increasingly displacing traditional hand-crafted algorithms. This has not only led to improved performance for existing technologies but has opened the door to a vast range of new capabilities that would be inconceivable if new algorithms had to be designed explicitly by hand.</p><p block-type="Text">One particular branch of machine learning, known as <i>deep learning</i>, has emerged as an exceptionally powerful and general-purpose framework for learning from data. Deep learning is based on computational models called <i>neural networks</i> which were originally inspired by mechanisms of learning and information processing in the human brain. The field of <i>artificial intelligence</i>, or AI, seeks to recreate the powerful capabilities of the brain in machines, and today the terms machine learning and AI are often used interchangeably. Many of the AI systems in current use represent ap-</p></div>
+    <div class="dr-doc" data-pdf="deep-learning.pdf">
+      <div class="dr-doc-header">
+        <h3>Deep Learning</h3>
+        <span class="dr-meta">Pages 21–40 of 656</span>
+      </div>
+      <div class="dr-doc-body"><div class="page" data-page-id="20"><p><img src="_page_20_Picture_0.jpeg"/></p><p><img src="_page_20_Picture_1.jpeg"/></p><p block-type="Text">Machine learning today is one of the most important, and fastest growing, fields of technology. Applications of machine learning are becoming ubiquitous, and solutions learned from data are increasingly displacing traditional hand-crafted algorithms. This has not only led to improved performance for existing technologies but has opened the door to a vast range of new capabilities that would be inconceivable if new algorithms had to be designed explicitly by hand.</p><p block-type="Text">One particular branch of machine learning, known as <i>deep learning</i>, has emerged as an exceptionally powerful and general-purpose framework for learning from data. Deep learning is based on computational models called <i>neural networks</i> which were originally inspired by mechanisms of learning and information processing in the human brain. The field of <i>artificial intelligence</i>, or AI, seeks to recreate the powerful capabilities of the brain in machines, and today the terms machine learning and AI are often used interchangeably. Many of the AI systems in current use represent ap-</p></div>
 <div class="page" data-page-id="21"><p block-type="Text">plications of machine learning which are designed to solve very specific and focused problems, and while these are extremely useful they fall far short of the tremendous breadth of capabilities of the human brain. This has led to the introduction of the term <i>artificial general intelligence</i>, or AGI, to describe the aspiration of building machines with this much greater flexibility. After many decades of steady progress, machine learning has now entered a phase of very rapid development. Recently, massive deep learning systems called large language models have started to exhibit remarkable capabilities that have been described as the first indications of artificial general intelligence (Bubeck <i>et al.</i>, 2023).</p><h3>Chapter 12</h3><h1>1.1. The Impact of Deep Learning</h1><p block-type="Text">We begin our discussion of machine learning by considering four examples drawn from diverse fields to illustrate the huge breadth of applicability of this technology and to introduce some basic concepts and terminology. What is particularly remarkable about these and many other examples is that they have all been addressed using variants of the same fundamental framework of deep learning. This is in sharp contrast to conventional approaches in which different applications are tackled using widely differing and specialist techniques. It should be emphasized that the examples we have chosen represent only a tiny fraction of the breadth of applicability for deep neural networks and that almost every domain where computation has a role is amenable to the transformational impact of deep learning.</p><h1>1.1.1 Medical diagnosis</h1><p block-type="Text">Consider first the application of machine learning to the problem of diagnosing skin cancer. Melanoma is the most dangerous kind of skin cancer but is curable if detected early. Figure 1.1 shows example images of skin lesions, with malignant melanomas on the top row and benign nevi on the bottom row. Distinguishing between these two classes of image is clearly very challenging, and it would be virtually impossible to write an algorithm by hand that could successfully classify such images with any reasonable level of accuracy.</p><p block-type="Text">This problem has been successfully addressed using deep learning (Esteva <i>et al.</i>, 2017). The solution was created using a large set of lesion images, known as</p><p><span id="page-21-0"></span>Figure 1.1 Examples of skin lesions corresponding to dangerous malignant melanomas on the top row and benign nevi on the bottom row. It is difficult for the untrained eye to distinguish between these two classes.</p><p><img src="_page_21_Figure_10.jpeg"/></p></div>
 <div class="page" data-page-id="22"><p block-type="Text">a <i>training set</i>, each of which is labelled as either malignant or benign, where the labels are obtained from a biopsy test that is considered to provide the true class of the lesion. The training set is used to determine the values of some 25 million adjustable parameters, known as weights, in a deep neural network. This process of setting the parameter values from data is known as <i>learning</i> or <i>training</i>. The goal is for the trained network to predict the correct label for a new lesion just from the image alone without needing the time-consuming step of taking a biopsy. This is an example of a <i>supervised learning</i> problem because, for each training example, the network is told the correct label. It is also an example of a <i>classification</i> problem because each input must be assigned to a discrete set of classes (benign or malignant in this case). Applications in which the output consists of one or more continuous variables are called <i>regression</i> problems. An example of a regression problem would be the prediction of the yield in a chemical manufacturing process in which the inputs consist of the temperature, the pressure, and the concentrations of reactants.</p><p block-type="Text">An interesting aspect of this application is that the number of labelled training images available, roughly 129,000, is considered relatively small, and so the deep neural network was first trained on a much larger data set of 1.28 million images of everyday objects (such as dogs, buildings, and mushrooms) and then <i>fine-tuned</i> on the data set of lesion images. This is an example of <i>transfer learning</i> in which the network learns the general properties of natural images from the large data set of everyday objects and is then specialized to the specific problem of lesion classification. Through the use of deep learning, the classification of skin lesion images has reached a level of accuracy that exceeds that of professional dermatologists (Brinker <i>et al.</i>, 2019).</p><h4>1.1.2 Protein structure</h4><p block-type="Text">Proteins are sometimes called the building blocks of living organisms. They are biological molecules that consist of one or more long chains of units called amino acids, of which there are 22 different types, and the protein is specified by the sequence of amino acids. Once a protein has been synthesized inside a living cell, it folds into a complex three-dimensional structure whose behaviour and interactions are strongly determined by its shape. Calculating this 3D structure, given the amino acid sequence, has been a fundamental open problem in biology for half a century that had seen relatively little progress until the advent of deep learning.</p><p block-type="Text">The 3D structure can be measured experimentally using techniques such as X-ray crystallography, cryogenic electron microscopy, or nuclear magnetic resonance spectroscopy. However, this can be extremely time-consuming and for some proteins can prove to be challenging, for example due to the difficulty of obtaining a pure sample or because the structure is dependent on the context. In contrast, the amino acid sequence of a protein can be determined experimentally at lower cost and higher throughput. Consequently, there is considerable interest in being able to predict the 3D structures of proteins directly from their amino acid sequences in order to better understand biological processes or for practical applications such as drug discovery. A deep learning model can be trained to take an amino acid sequence as input and generate the 3D structure as output, in which the training data</p></div>
 <div class="page" data-page-id="23"><p><span id="page-23-0"></span>ł</p><p>Figure 1.2 Illustration of the 3D shape of a protein called T1044/6VR4. The green structure shows the ground truth as determined by X-ray crystallography, whereas the superimposed blue structure shows the prediction obtained by a deep learning model called AlphaFold. [From Jumper et al. (2021) with permission.]</p><p><img src="_page_23_Figure_3.jpeg"/></p><p block-type="Text">consist of a set of proteins for which the amino acid sequence and the 3D structure are both known. Protein structure prediction is therefore another example of supervised learning. Once the system is trained it can take a new amino acid sequence as input and can predict the associated 3D structure (Jumper <i>et al.</i>, 2021). Figure 1.2 compares the predicted 3D structure of a protein and the ground truth obtained by X-ray crystallography.</p><h1>1.1.3 Image synthesis</h1><p block-type="Text">In the two applications discussed so far, a neural network learned to transform an input (a skin image or an amino acid sequence) into an output (a lesion classification or a 3D protein structure, respectively). We turn now to an example where the training data consist simply of a set of sample images and the goal of the trained network is to create new images of the same kind. This is an example of <i>unsupervised learning</i> because the images are unlabelled, in contrast to the lesion classification and protein structure examples. Figure 1.3 shows examples of synthetic images generated by a deep neural network trained on a set of images of human faces taken in a studio against a plain background. Such synthetic images are of exceptionally high quality and it can be difficult tell them apart from photographs of real people.</p><p block-type="Text">This is an example of a <i>generative model</i> because it can generate new output examples that differ from those used to train the model but which share the same statistical properties. A variant of this approach allows images to be generated that depend on an input text string known, as a <i>prompt</i>, so that the image content reflects the semantics of the text input. The term <i>generative AI</i> is used to describe deep learning models that generate outputs in the form of images, video, audio, text, candidate drug molecules, or other modalities.</p></div>
@@ -325,7 +590,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
 <div class="page" data-page-id="36"><p><span id="page-36-0"></span>Figure 1.13 A simple neural network diagram representing the transformations (1.5) and (1.6) describing a single neuron. The polynomial function (1.1) can be seen as a special case of this model.</p><p><img src="_page_36_Figure_3.jpeg"/></p><p block-type="Text">can be expressed mathematically in the form</p><p block-type="Equation">$$a = \sum_{i=1}^{M} w_i x_i \tag{1.5}$$</p><p block-type="Equation">$$y = f(a) 		(1.6)$$</p><p block-type="Text">where $x_1, \ldots, x_M$ represent M inputs corresponding to the activities of other neurons that send connections to this neuron, and $w_1, \ldots, w_M$ are continuous variables, called <i>weights</i>, which represent the strengths of the associated synapses. The quantity a is called the <i>pre-activation</i>, the nonlinear function $f(\cdot)$ is called the <i>activation function</i>, and the output y is called the <i>activation</i>. We can see that the polynomial (1.1) can be viewed as a specific instance of this representation in which the inputs $x_i$ are given by powers of a single variable x, and the function $f(\cdot)$ is just the identity f(a) = a. The simple mathematical formulation given by (1.5) and (1.6) has formed the basis of neural network models from the 1960s up to the present day, and can be represented in diagram form as shown in Figure 1.13.</p><h1>1.3.1 Single-layer networks</h1><p block-type="Text">The history of artificial neural networks can broadly be divided into three distinct phases according to the level of sophistication of the networks as measured by the number of 'layers' of processing. A simple neural model described by (1.5) and (1.6) can be viewed as having a single layer of processing corresponding to the single layer of connections in Figure 1.13. One of the most important such models in the history of neural computing is the <i>perceptron</i> (Rosenblatt, 1962) in which the activation function $f(\cdot)$ is a step function of the form</p><p block-type="Equation">$$f(a) = \begin{cases} 0, &amp; \text{if } a \leq 0, \\ 1, &amp; \text{if } a &gt; 0. \end{cases} $$ (1.7)</p><p block-type="Text">This can be viewed as a simplified model of neural firing in which a neuron fires if, and only if, the total weighted input exceeds a threshold of 0. The perceptron was pioneered by Rosenblatt (1962), who developed a specific training algorithm that has the interesting property that if there exists a set of weight values for which the perceptron can achieve perfect classification of its training data then the algorithm is guaranteed to find the solution in a finite number of steps (Bishop, 2006). As well as a learning algorithm, the perceptron also had a dedicated analogue hardware</p></div>
 <div class="page" data-page-id="37"><p><span id="page-37-0"></span><img src="_page_37_Picture_2.jpeg"/></p><p><img src="_page_37_Picture_3.jpeg"/></p><p><img src="_page_37_Picture_4.jpeg"/></p><p>Figure 1.14 Illustration of the Mark 1 perceptron hardware. The photograph on the left shows how the inputs were obtained using a simple camera system in which an input scene, in this case a printed character, was illuminated by powerful lights, and an image focused onto a $20 \times 20$ array of cadmium sulphide photocells, giving a primitive 400-pixel image. The perceptron also had a patch board, shown in the middle photograph, which allowed different configurations of input features to be tried. Often these were wired up at random to demonstrate the ability of the perceptron to learn without the need for precise wiring, in contrast to a modern digital computer. The photograph on the right shows one of the racks of learnable weights. Each weight was implemented using a rotary variable resistor, also called a potentiometer, driven by an electric motor thereby allowing the value of the weight to be adjusted automatically by the learning algorithm.</p><p block-type="Text">implementation, as shown in Figure 1.14. A typical perceptron configuration had multiple layers of processing, but only one of those layers was learnable from data, and so the perceptron is considered to be a 'single-layer' neural network.</p><p block-type="Text">At first, the ability of perceptrons to learn from data in a brain-like way was considered remarkable. However, it became apparent that the model also has major limitations. The properties of perceptrons were analysed by Minsky and Papert (1969), who gave formal proofs of the limited capabilities of single-layer networks. Unfortunately, they also speculated that similar limitations would extend to networks having multiple layers of learnable parameters. Although this latter conjecture proved to be wildly incorrect, the effect was to dampen enthusiasm for neural network models, and this contributed to the lack of interest, and funding, for neural networks during the 1970s and early 1980s. Furthermore, researchers were unable to explore the properties of multilayered networks due to the lack of an effective algorithm for training them, since techniques such as the perceptron algorithm were specific to single-layer models. Note that although perceptrons have long disappeared from practical machine learning, the name lives on because a modern neural network is also sometimes called a <i>multilayer perceptron</i> or <i>MLP</i>.</p><h1>1.3.2 Backpropagation</h1><p block-type="Text">The solution to the problem of training neural networks having more than one layer of learnable parameters came from the use of differential calculus and the application of gradient-based optimization methods. An important change was to replace the step function (1.7) with continuous differentiable activation functions having a non-zero gradient. Another key modification was to introduce differentiable error functions that define how well a given choice of parameter values predicts the target variables in the training set. We saw an example of such an error function when we</p></div>
 <div class="page" data-page-id="38"><p><span id="page-38-0"></span>Figure 1.15 A neural network having two layers of parameters in which arrows denote the direction of information flow through the network. Each of the hidden units and each of the output units computes a function of the form given by (1.5) and (1.6) in which the activation function $f(\cdot)$ is differentiable.</p><p><img src="_page_38_Figure_3.jpeg"/></p><p block-type="Text">Section 1.2.3</p><p block-type="Text">used the sum-of-squares error function (1.2) to fit polynomials.</p><p block-type="Text">With these changes, we now have an error function whose derivatives with respect to each of the parameters in the network can be evaluated. We can now consider networks having more than one layer of parameters. Figure 1.15 shows a simple network with two processing layers. Nodes in the middle layer called <i>hidden units</i> because their values do not appear in the training set, which only provides values for inputs and outputs. Each of the hidden units and each of the output units in Figure 1.15 computes a function of the form given by (1.5) and (1.6). For a given set of input values, the states of all of the hidden and output units can be evaluated by repeated application of (1.5) and (1.6) in which information is flowing forward through the network in the direction of the arrows. For this reason, such models are sometimes also called <i>feed-forward neural networks</i>.</p><p block-type="Text">To train such a network the parameters are first initialized using a random number generator and are then iteratively updated using gradient-based optimization techniques. This involves evaluating the derivatives of the error function, which can be done efficiently in a process known as <i>error backpropagation</i>. In backpropagation, information flows backwards through the network from the outputs towards the inputs (Rumelhart, Hinton, and Williams, 1986). There exist many different optimization algorithms that make use of gradients of the function to be optimized, but the one that is most prevalent in machine learning is also the simplest and is known as <i>stochastic gradient descent</i>.</p><p block-type="Text">Chapter 8</p><p block-type="Text">Chapter 7</p><p block-type="Text">The ability to train neural networks having multiple layers of weights was a breakthrough that led to a resurgence of interest in the field starting around the mid-1980s. This was also a period in which the field moved beyond a focus on neurobiological inspiration and developed a more rigorous and principled foundation (Bishop, 1995b). In particular, it was recognized that probability theory, and ideas from the field of statistics, play a central role in neural networks and machine learning. One key insight is that learning from data involves background assumptions, sometimes called <i>prior knowledge</i> or <i>inductive biases</i>. These might be incorporated explicitly, for example by designing the structure of a neural network such that the classification of a skin lesion does not depend on the location of the lesion within the image, or they might take the form of implicit assumptions that arise from the mathematical</p></div>
-<div class="page" data-page-id="39"><p block-type="Text">form of the model or the way it is trained.</p><p block-type="Text">The development of backpropagation and gradient-based optimization dramatically increased the capability of neural networks to solve practical problems. However, it was also observed that in networks with many layers, it was only weights in the final two layers that would learn useful values. With a few exceptions, notably models used for image analysis known as convolutional neural networks (LeCun et al., 1998), there were very few successful applications of networks having more than two layers. Again, this constrained the complexity of the problems that could be addressed effectively with these kinds of network. To achieve reasonable performance on many applications, it was necessary to use hand-crafted <i>pre-processing</i> to transform the input variables into some new space where, it was hoped, the machine learning problem would be easier to solve. This pre-processing stage is sometimes also called <i>feature extraction</i>. Although this approach was sometimes effective, it would clearly be much better if features could be learned from the data rather than being hand-crafted.</p><p block-type="Text">By the start of the new millennium, the available neural network methods were once again reaching the limits of their capability. Researchers began to explore a raft of alternatives to neural networks, such as kernel methods, support vector machines, Gaussian processes, and many others. Neural networks fell into disfavour once again, although a core of enthusiastic researchers continued to pursue the goal of a truly effective approach to training networks with many layers.</p><h3>1.3.3 Deep networks</h3><p block-type="Text">The third, and current, phase in the development of neural networks began during the second decade of the 21st century. A series of developments allowed neural networks with many layers of weights to be trained effectively, thereby removing previous limitations on the capabilities of these techniques. Networks with many layers of weights are called <i>deep neural networks</i> and the sub-field of machine learning that focuses on such networks is called <i>deep learning</i> (LeCun, Bengio, and Hinton, 2015).</p><p block-type="Text">One important theme in the origins of deep learning was a significant increase in the scale of neural networks, measured in terms of the number of parameters. Although networks with a few hundred or a few thousand parameters were common in the 1980s, this steadily rose to the millions, and then billions, whereas current state-of-the-art models can have in the region of one trillion $(10^{12})$ parameters. Networks with many parameters require commensurately large data sets so that the training signals can produced good values for those parameters. The combination of massive models and massive data sets in turn requires computation on a massive scale when training the model. Specialist processors called <i>graphics processing units</i>, or GPUs, which had been developed for very fast rendering of graphical data for applications such as video games, proved to be well suited to the training of neural networks because the functions computed by the units in one layer of a network can be evaluated in parallel, and this maps well onto the massive parallelism of GPUs (Krizhevsky, Sutskever, and Hinton, 2012). Today, training for the largest models is performed on large arrays of thousands of GPUs linked by specialist high-speed interconnections.</p></div>
+<div class="page" data-page-id="39"><p block-type="Text">form of the model or the way it is trained.</p><p block-type="Text">The development of backpropagation and gradient-based optimization dramatically increased the capability of neural networks to solve practical problems. However, it was also observed that in networks with many layers, it was only weights in the final two layers that would learn useful values. With a few exceptions, notably models used for image analysis known as convolutional neural networks (LeCun et al., 1998), there were very few successful applications of networks having more than two layers. Again, this constrained the complexity of the problems that could be addressed effectively with these kinds of network. To achieve reasonable performance on many applications, it was necessary to use hand-crafted <i>pre-processing</i> to transform the input variables into some new space where, it was hoped, the machine learning problem would be easier to solve. This pre-processing stage is sometimes also called <i>feature extraction</i>. Although this approach was sometimes effective, it would clearly be much better if features could be learned from the data rather than being hand-crafted.</p><p block-type="Text">By the start of the new millennium, the available neural network methods were once again reaching the limits of their capability. Researchers began to explore a raft of alternatives to neural networks, such as kernel methods, support vector machines, Gaussian processes, and many others. Neural networks fell into disfavour once again, although a core of enthusiastic researchers continued to pursue the goal of a truly effective approach to training networks with many layers.</p><h3>1.3.3 Deep networks</h3><p block-type="Text">The third, and current, phase in the development of neural networks began during the second decade of the 21st century. A series of developments allowed neural networks with many layers of weights to be trained effectively, thereby removing previous limitations on the capabilities of these techniques. Networks with many layers of weights are called <i>deep neural networks</i> and the sub-field of machine learning that focuses on such networks is called <i>deep learning</i> (LeCun, Bengio, and Hinton, 2015).</p><p block-type="Text">One important theme in the origins of deep learning was a significant increase in the scale of neural networks, measured in terms of the number of parameters. Although networks with a few hundred or a few thousand parameters were common in the 1980s, this steadily rose to the millions, and then billions, whereas current state-of-the-art models can have in the region of one trillion $(10^{12})$ parameters. Networks with many parameters require commensurately large data sets so that the training signals can produced good values for those parameters. The combination of massive models and massive data sets in turn requires computation on a massive scale when training the model. Specialist processors called <i>graphics processing units</i>, or GPUs, which had been developed for very fast rendering of graphical data for applications such as video games, proved to be well suited to the training of neural networks because the functions computed by the units in one layer of a network can be evaluated in parallel, and this maps well onto the massive parallelism of GPUs (Krizhevsky, Sutskever, and Hinton, 2012). Today, training for the largest models is performed on large arrays of thousands of GPUs linked by specialist high-speed interconnections.</p></div></div>
+      <div class="pdf-view"></div>
     </div>
     
   </article>
@@ -335,6 +601,89 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
   <span class="checkmark">✅</span>
   Done for today. See you tomorrow.
 </div>
+
+<script type="module">/* laptop.js — Desktop-only PDF viewer using pdf.js.
+ * Finds all .dr-doc[data-pdf] elements and renders their PDFs to canvas.
+ * Only runs on viewports >= 769px.
+ */
+
+if (window.matchMedia('(min-width: 769px)').matches) {
+  (async () => {
+    const pdfjsLib = await import(
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.min.mjs'
+    );
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.9.155/pdf.worker.min.mjs';
+
+    const RENDER_SCALE = Math.max(window.devicePixelRatio || 1, 2.5);
+    const pdfDocs = document.querySelectorAll('.dr-doc[data-pdf]');
+
+    // Global list of all PDF page elements (across all documents)
+    const allPageEls = [];
+    let currentPage = 0;
+
+    for (const docEl of pdfDocs) {
+      const pdfUrl = docEl.dataset.pdf;
+      const container = docEl.querySelector('.pdf-view');
+      if (!container) continue;
+
+      try {
+        const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: RENDER_SCALE });
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'pdf-page';
+
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({
+            canvasContext: canvas.getContext('2d'),
+            viewport,
+          }).promise;
+
+          wrapper.appendChild(canvas);
+          container.appendChild(wrapper);
+          allPageEls.push(wrapper);
+        }
+      } catch (err) {
+        console.warn('pdf.js failed for', pdfUrl, err);
+        // Fallback: show the Marker HTML
+        const body = docEl.querySelector('.dr-doc-body');
+        if (body) body.style.display = '';
+      }
+    }
+
+    // Single IntersectionObserver tracking all PDF pages
+    if (allPageEls.length > 0) {
+      const observer = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            currentPage = allPageEls.indexOf(e.target);
+          }
+        }
+      }, { threshold: 0.5 });
+      allPageEls.forEach((el) => observer.observe(el));
+
+      // Single keydown listener for arrow key navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          const next = Math.min(currentPage + 1, allPageEls.length - 1);
+          allPageEls[next].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prev = Math.max(currentPage - 1, 0);
+          allPageEls[prev].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    }
+  })();
+}</script>
+
 
 <div class="dr-progress-bar">
   <div class="dr-progress-fill"></div>

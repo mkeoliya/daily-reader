@@ -39,6 +39,8 @@ class Page:
 class Document(ABC):
     """Abstract base for any document type (PDF, Markdown, ePub, etc.)."""
 
+    is_pdf: bool = False
+
     def __init__(self, source_path: Path):
         self.source_path = source_path
         self.title: str = source_path.stem
@@ -115,17 +117,9 @@ class DailyReaderRenderer(HTMLRenderer):
     paginate_output: bool = True
 
     def __call__(self, document: MarkerDocument) -> HTMLOutput:
-        # Remove TableOfContents blocks — Marker renders them as broken tables.
-        from marker.schema import BlockTypes
-
-        for toc in document.contained_blocks((BlockTypes.TableOfContents,)):
-            page = document.get_page(toc.id.page_id)
-            page.remove_structure_items([toc.id])
-
         document_output = document.render(self.block_config)
         full_html, images = self.extract_html(document, document_output)
         full_html = _convert_math_tags(full_html)
-
 
         return HTMLOutput(
             html=full_html,
@@ -137,6 +131,7 @@ class DailyReaderRenderer(HTMLRenderer):
 class PdfDocument(Document):
     """PDF document — uses Marker for conversion."""
 
+    is_pdf: bool = True
     _converter = None
 
     @classmethod
@@ -196,6 +191,32 @@ class PdfDocument(Document):
             )
 
         return pages
+
+    def split_pages(self, start: int, count: int, output_path: Path) -> Path:
+        """Extract a page range from the source PDF into a new file.
+
+        Args:
+            start: 0-indexed start page.
+            count: Number of pages to extract.
+            output_path: Where to write the split PDF.
+
+        Returns:
+            The output_path for convenience.
+        """
+        import pypdfium2 as pdfium
+
+        doc = pdfium.PdfDocument(str(self.source_path))
+        new_doc = pdfium.PdfDocument.new()
+        end = min(start + count, len(doc))
+        for i in range(start, end):
+            new_doc.import_pages(doc, [i])
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "wb") as f:
+            new_doc.save(f)
+        new_doc.close()
+        doc.close()
+        logger.info("Split PDF pages %d–%d → %s", start + 1, end, output_path)
+        return output_path
 
 
 # ---------------------------------------------------------------------------
