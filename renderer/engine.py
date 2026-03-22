@@ -86,36 +86,17 @@ def render_daily_page(
     )
 
 
-def render_bookshelf(sections: list) -> str:
-    """Render a minimalist bookshelf page with progress.
+def render_section_fragment(
+    section: dict,
+    next_section: dict | None = None,
+) -> str:
+    """Render a single section as a bare HTML fragment for lazy loading.
 
     Args:
-        sections: List of Section objects with .queue (DocumentQueue entries)
-                  and .finished lists.
+        section: Dict with section_name, slug, documents.
+        next_section: Dict for the next section (None if this is the last).
     """
-    book_data = []
-    for section in sections:
-        for entry in section.queue:
-            total = entry.doc.total_pages
-            current = entry.current_page
-            pct = (current / total * 100) if total > 0 else 0
-            book_data.append({
-                "title": entry.doc.title,
-                "current": current,
-                "total": total,
-                "pct": pct,
-                "pct_int": int(pct),
-                "section": section.name,
-            })
-        for name in section.finished:
-            book_data.append({
-                "title": Path(name).stem,
-                "current": 1,
-                "total": 1,
-                "pct": 100,
-                "pct_int": 100,
-                "section": section.name,
-            })
+    tmpl = _env.get_template("section_fragment.html")
+    return tmpl.render(s=section, next_section=next_section)
 
-    tmpl = _env.get_template("bookshelf.html")
-    return tmpl.render(title="Bookshelf", books=book_data)
+

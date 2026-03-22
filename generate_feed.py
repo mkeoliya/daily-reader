@@ -13,7 +13,7 @@ import datetime
 import logging
 from pathlib import Path
 
-from renderer import render_daily_page, _estimate_reading_time
+from renderer import render_daily_page, render_section_fragment, _estimate_reading_time
 from sections import load_sections, save_sections
 
 # ---------------------------------------------------------------------------
@@ -129,6 +129,16 @@ def generate(send_email: bool = False):
     page_dir = SITE_DIR / "pages" / today.isoformat()
     page_dir.mkdir(parents=True, exist_ok=True)
     (page_dir / "index.html").write_text(page_html)
+
+    # Write section fragments for progressive loading (sections 2+)
+    from renderer.engine import _slugify
+    for i, s in enumerate(page_sections[1:], start=1):
+        s["slug"] = _slugify(s["section_name"])
+        next_s = page_sections[i + 1] if i + 1 < len(page_sections) else None
+        if next_s:
+            next_s["slug"] = _slugify(next_s["section_name"])
+        frag = render_section_fragment(s, next_s)
+        (page_dir / f"section-{s['slug']}.html").write_text(frag)
 
     # Write images
     for img_name, img_data in all_images.items():

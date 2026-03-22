@@ -1,4 +1,4 @@
-{# page.html — Daily combined page with multi-section support #}
+{# page.html — Daily combined page with progressive section loading #}
 {% extends "base.html" %}
 {% block head_extra %}
 {% if has_pdf %}
@@ -24,28 +24,30 @@
   {% endif %}
 </header>
 <main>
-  {% for s in sections %}
-  <article id="section-{{ s.slug }}">
-    <h2 class="dr-section-title">{{ s.section_name }}</h2>
-    {% for doc in s.documents %}
-    <div class="dr-doc"{% if doc.pdf_filename %} data-pdf="{{ doc.pdf_filename }}"{% endif %}>
-      <div class="dr-doc-header">
-        <h3>{{ doc.title }}</h3>
-        <span class="dr-meta">{{ doc.page_info }}</span>
-      </div>
-      <div class="dr-doc-body">{{ doc.body_html | safe }}</div>
-      {% if doc.pdf_filename %}<div class="pdf-view"></div>{% endif %}
-    </div>
-    {% endfor %}
-  </article>
-  {% endfor %}
+  {% set s = sections[0] %}
+  {% include "_article.html" %}
+  {% if sections|length > 1 %}
+  <a href="section-{{ sections[1].slug }}.html" data-section>Continue to {{ sections[1].section_name }} →</a>
+  {% else %}
+  <div class="dr-done">
+    <span class="checkmark">✅</span>
+    Done for today. See you tomorrow.
+  </div>
+  {% endif %}
 </main>
-<div class="dr-done">
-  <span class="checkmark">✅</span>
-  Done for today. See you tomorrow.
-</div>
 {% if has_pdf %}
 <div class="dr-view-toast"></div>
 <script type="module">{% include "laptop.js" %}</script>
 {% endif %}
+<script>
+document.onclick = async e => {
+  const a = e.target.closest('[data-section]');
+  if (!a) return;
+  e.preventDefault();
+  a.outerHTML = await (await fetch(a.href)).text();
+  const s = document.querySelector('article:last-of-type');
+  s.scrollIntoView({behavior:'smooth'});
+  renderMathInElement?.(s);
+};
+</script>
 {% endblock %}
