@@ -272,6 +272,163 @@ class MarkdownDocument(Document):
 
 
 # ---------------------------------------------------------------------------
+# ePub document — ebooklib extraction with clean HTML
+# ---------------------------------------------------------------------------
+
+
+class EpubDocument(Document):
+    """ePub book — extracts chapter HTML via ebooklib, strips noise, preserves formatting."""
+
+    def __init__(self, source_path: Path):
+        super().__init__(source_path)
+
+    def _read_book(self):
+        import ebooklib
+        from ebooklib import epub
+
+        return epub.read_epub(str(self.source_path))
+
+    def _get_chapters(self) -> list:
+        """Return spine-ordered document items (actual content chapters)."""
+        import ebooklib
+
+        book = self._read_book()
+        chapters = []
+        for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+            # Skip tiny items (TOC fragments, title pages, etc.)
+            content = item.get_content()
+            if len(content) > 1500:
+                chapters.append(content)
+        return chapters
+
+    def _count_pages(self) -> int:
+        return len(self._get_chapters())
+
+    @staticmethod
+    def _clean_html(raw_html: bytes) -> str:
+        """Strip calibre noise from ePub HTML while preserving semantic tags."""
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(raw_html, "html.parser")
+
+        # Extract body content (skip <head>, <html> wrappers)
+        body = soup.find("body")
+        if body:
+            soup = body
+
+        # Strip class attributes (calibre6, calibre15, etc.)
+        for tag in soup.find_all(True):
+            if tag.get("class"):
+                del tag["class"]
+            if tag.get("id"):
+                del tag["id"]
+
+        # Unwrap empty/pointless spans
+        for span in soup.find_all("span"):
+            if not span.attrs:
+                span.unwrap()
+
+        return str(soup)
+
+    def get_pages(self, start: int, count: int) -> list[Page]:
+        chapters = self._get_chapters()
+        pages_to_take = min(count, len(chapters) - start)
+        if pages_to_take <= 0:
+            return []
+
+        pages = []
+        for i in range(pages_to_take):
+            ch_idx = start + i
+            html = self._clean_html(chapters[ch_idx])
+            pages.append(Page(html=html, page_number=ch_idx + 1))
+
+        return pages
+
+
+# ---------------------------------------------------------------------------
+# ArXiv document — embeds ar5iv HTML as-is
+# ---------------------------------------------------------------------------
+
+
+class ArxivDocument(Document):
+    """ArXiv paper — fetches rendered HTML from ar5iv and embeds it as a single page."""
+
+    _AR5IV_BASE = "https://ar5iv.labs.arxiv.org/html/"
+
+    def __init__(self, source_path: Path):
+        self.arxiv_id = source_path.read_text().strip()
+        super().__init__(source_path)
+
+    def _count_pages(self) -> int:
+        return 1  # whole paper = one page
+
+    def _fetch_html(self) -> str:
+        """Fetch ar5iv HTML, caching locally to avoid re-downloading."""
+        cache_dir = self.source_path.parent / ".cache"
+        cache_file = cache_dir / f"{self.arxiv_id.replace('/', '_')}.html"
+
+        if cache_file.exists():
+            logger.info(f"Using cached ar5iv HTML: {cache_file}")
+            return cache_file.read_text()
+
+        import urllib.request
+
+        url = f"{self._AR5IV_BASE}{self.arxiv_id}"
+        logger.info(f"Fetching ar5iv HTML: {url}")
+
+        req = urllib.request.Request(url, headers={"User-Agent": "DailyReader/1.0"})
+        with urllib.request.urlopen(req) as resp:
+            html = resp.read().decode("utf-8")
+
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file.write_text(html)
+        logger.info(f"Cached ar5iv HTML → {cache_file}")
+        return html
+
+    def get_pages(self, start: int, count: int) -> list[Page]:
+        if start >= 1 or count <= 0:
+            return []
+
+        from bs4 import BeautifulSoup
+
+        full_html = self._fetch_html()
+        soup = BeautifulSoup(full_html, "html.parser")
+
+        # Extract the paper title for a nicer display name
+        title_tag = soup.find("h1", class_="ltx_title")
+        if title_tag:
+            self.title = title_tag.get_text(strip=True)
+
+        # Extract just the article body from ar5iv
+        article = soup.find("article")
+        if article:
+            content = article
+        else:
+            # Fallback: use the whole body
+            content = soup.find("body") or soup
+
+        # Rewrite relative URLs to absolute ar5iv URLs
+        ar5iv_origin = "https://ar5iv.labs.arxiv.org"
+        base_url = f"{ar5iv_origin}/html/{self.arxiv_id}"
+        for tag in content.find_all(["img", "source"]):
+            src = tag.get("src", "")
+            if src and not src.startswith(("http://", "https://", "data:")):
+                if src.startswith("/"):
+                    tag["src"] = f"{ar5iv_origin}{src}"
+                else:
+                    tag["src"] = f"{base_url}/{src}"
+        for tag in content.find_all("a"):
+            href = tag.get("href", "")
+            if href and not href.startswith(("http://", "https://", "#", "mailto:")):
+                if href.startswith("/"):
+                    tag["href"] = f"{ar5iv_origin}{href}"
+                else:
+                    tag["href"] = f"{base_url}/{href}"
+
+        return [Page(html=str(content), page_number=1)]
+
+
+# ---------------------------------------------------------------------------
 # Factory
 # ---------------------------------------------------------------------------
 
@@ -283,5 +440,9 @@ def load_document(path: Path) -> Document:
         return PdfDocument(path)
     elif ext in (".md", ".txt"):
         return MarkdownDocument(path)
+    elif ext == ".epub":
+        return EpubDocument(path)
+    elif ext == ".arxiv":
+        return ArxivDocument(path)
     else:
         raise ValueError(f"Unsupported document format: {ext}")

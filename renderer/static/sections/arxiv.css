@@ -1,0 +1,16 @@
+/* Section: arxiv — arxiv paper styling */
+#section-arxiv {
+    --accent: #b31b1b;
+}
+
+/* Contain ar5iv's own layout within our max-width */
+#section-arxiv article {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* ar5iv figure images */
+#section-arxiv img {
+    max-width: 100%;
+    height: auto;
+}
