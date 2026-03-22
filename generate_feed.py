@@ -75,7 +75,7 @@ def generate(send_email: bool = False):
             if doc.is_pdf:
                 stem = doc.title.lower().replace(' ', '-')
                 pdf_pages = [f"{stem}-p{first_page + i}.webp" for i in range(len(pages))]
-                pdf_renders.append((doc, current_page, len(pages), stem))
+                pdf_renders.append((doc, current_page, len(pages), stem, first_page))
             elif doc.pdf_url:
                 # ArXiv: download and render at build time (TODO)
                 pass
@@ -154,14 +154,14 @@ def generate(send_email: bool = False):
     from PIL import Image as PILImage
     RENDER_SCALE = 2.5
     WEBP_QUALITY = 95
-    for doc, start_page, count, stem in pdf_renders:
+    for doc, start_page, count, stem, first_page in pdf_renders:
         pdf_path = doc.split_pages(start_page, count, page_dir / f"{stem}.pdf")
         pdf_doc = pdfium.PdfDocument(str(pdf_path))
         for i in range(len(pdf_doc)):
             page = pdf_doc[i]
             bmp = page.render(scale=RENDER_SCALE)
             img = bmp.to_pil()
-            img.save(str(page_dir / f"{stem}-p{start_page + i}.webp"), 'webp', quality=WEBP_QUALITY)
+            img.save(str(page_dir / f"{stem}-p{first_page + i}.webp"), 'webp', quality=WEBP_QUALITY)
         pdf_doc.close()
         pdf_path.unlink()  # remove the split PDF, images are enough
 
